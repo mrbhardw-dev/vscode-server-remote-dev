@@ -74,7 +74,26 @@ This deployment uses the following Always Free resources:
 
 ## 🚀 Quick Start (5 Minutes)
 
-### Step 1: Clone and Configure
+### Option A: Automated Setup (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/vscode-server-cloud.git
+cd vscode-server-cloud/oci
+
+# Run the automated setup script
+./setup-credentials.sh
+
+# This script will:
+# 1. Generate OCI API keys (if needed)
+# 2. Guide you through credential setup
+# 3. Create terraform.tfvars file
+# 4. Optionally run terraform init
+```
+
+### Option B: Manual Setup
+
+#### Step 1: Clone and Configure
 
 ```bash
 # Clone the repository
@@ -88,7 +107,7 @@ cp terraform.tfvars.example terraform.tfvars
 nano terraform.tfvars
 ```
 
-### Step 2: Minimum Configuration
+#### Step 2: Minimum Configuration
 
 Edit `terraform.tfvars` with your OCI details:
 
@@ -108,6 +127,8 @@ instance_shape         = "VM.Standard.A1.Flex"
 instance_ocpus         = 2
 instance_memory_in_gbs = 12
 ```
+
+**Need help getting these values? See [OCI_AUTH_SETUP.md](./OCI_AUTH_SETUP.md)**
 
 ### Step 3: Deploy
 
@@ -375,6 +396,57 @@ ss -tulpn
 ```
 
 ## 🐛 Troubleshooting
+
+### Issue: 401-NotAuthenticated Error
+
+**Error Message:**
+```
+Error: 401-NotAuthenticated, The required information to complete 
+authentication was not provided or was incorrect.
+```
+
+**This means Terraform cannot authenticate with OCI.** 
+
+**Quick Fix:**
+```bash
+# Run the automated setup script
+cd oci
+./setup-credentials.sh
+```
+
+**Manual Fix:**
+
+1. **Verify your `terraform.tfvars` file exists and contains:**
+   ```hcl
+   tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaa..."
+   user_ocid        = "ocid1.user.oc1..aaaaaaa..."
+   fingerprint      = "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+   private_key_path = "~/.oci/oci_api_key.pem"
+   compartment_id   = "ocid1.compartment.oc1..aaaaaaa..."
+   region           = "us-phoenix-1"
+   vscode_password  = "YourSecurePassword123!"
+   ```
+
+2. **Verify private key file exists:**
+   ```bash
+   ls -la ~/.oci/oci_api_key.pem
+   chmod 600 ~/.oci/oci_api_key.pem
+   ```
+
+3. **Verify fingerprint matches OCI Console:**
+   - Go to: Profile → User Settings → API Keys
+   - Compare the fingerprint shown with your `terraform.tfvars`
+
+4. **Test OCI authentication:**
+   ```bash
+   # Install OCI CLI (optional)
+   pip install oci-cli
+   
+   # Test connection
+   oci iam region list --config-file ~/.oci/config
+   ```
+
+**See [OCI_AUTH_SETUP.md](./OCI_AUTH_SETUP.md) for detailed authentication setup guide.**
 
 ### Issue: Can't access VS Code Server
 

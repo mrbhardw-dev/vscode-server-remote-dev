@@ -17,14 +17,14 @@
 # -----------------------------------------------------------------------------
 module "labels" {
   source  = "eazycloudlife/labels/gcp"
-  version = "~> 1.0"  # Use compatible version with patch updates
+  version = "~> 1.0" # Use compatible version with patch updates
 
   # -----------------------------------------------------------------------------
   # CORE NAMING CONFIGURATION
   # -----------------------------------------------------------------------------
   name        = local.name_prefix
   environment = local.environment
-  
+
   # Define the order of elements in generated resource names
   # Format: {name}-{environment}-{attributes}
   label_order = ["name", "environment"]
@@ -34,10 +34,10 @@ module "labels" {
   # -----------------------------------------------------------------------------
   business_unit = "Engineering"
   managed_by    = var.managed_by
-  
+
   # Additional attributes (region code, etc.)
   attributes = [
-    replace(local.region, "-", ""),  # e.g., "europewest2"
+    replace(local.region, "-", ""), # e.g., "europewest2"
     "${var.environment}-env"
   ]
 
@@ -50,17 +50,17 @@ module "labels" {
     {
       # Application-specific identifier
       application = "vscode-server"
-      
+
       # Cost allocation
       cost-center = "dev-tools"
-      
+
       # Compliance
       compliance = "internal"
-      
+
       # Automation
-      managed-by   = "terraform"
-      repo         = "https://github.com/your-org/vscode-server-gcp"
-      terraform    = "true"
+      managed-by = "terraform"
+      repo       = "https://github.com/your-org/vscode-server-gcp"
+      terraform  = "true"
     },
     var.additional_tags
   )

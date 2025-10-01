@@ -61,11 +61,11 @@ output "firewall_rules" {
   description = "List of created firewall rules"
   value = [
     for rule in module.network.firewall_rules : {
-      name        = rule.name
-      direction   = rule.direction
-      priority    = rule.priority
+      name          = rule.name
+      direction     = rule.direction
+      priority      = rule.priority
       source_ranges = rule.source_ranges
-      target_tags = rule.target_tags
+      target_tags   = rule.target_tags
       allow = [{
         protocol = rule.allow[0].protocol
         ports    = rule.allow[0].ports
@@ -112,9 +112,9 @@ output "service_account" {
 output "security_groups" {
   description = "Security group IDs and names"
   value = {
-    ssh    = module.network.firewall_rules[0].id
-    http   = module.network.firewall_rules[1].id
-    https  = module.network.firewall_rules[2].id
+    ssh      = module.network.firewall_rules[0].id
+    http     = module.network.firewall_rules[1].id
+    https    = module.network.firewall_rules[2].id
     internal = module.network.firewall_rules[3].id
   }
 }

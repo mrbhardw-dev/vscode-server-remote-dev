@@ -138,14 +138,14 @@ output "free_tier_info" {
     ocpus_used      = local.free_tier_config.current_ocpus
     memory_used_gb  = local.free_tier_config.current_memory
     storage_used_gb = local.free_tier_config.current_storage
-    
+
     limits = {
       max_amd_instances = local.free_tier_config.max_amd_instances
       max_arm_ocpus     = local.free_tier_config.max_arm_ocpus
       max_arm_memory_gb = local.free_tier_config.max_arm_memory
       max_storage_gb    = local.free_tier_config.max_boot_volume
     }
-    
+
     recommendations = {
       shape   = local.free_tier_config.recommended_shape
       ocpus   = local.free_tier_config.recommended_ocpus
@@ -191,12 +191,12 @@ output "compartment_id" {
 output "security_notes" {
   description = "Security configuration notes"
   value = {
-    ssh_access_from    = var.allowed_ssh_cidr
-    https_access_from  = var.allowed_https_cidr
-    vscode_port        = var.vscode_port
-    https_enabled      = var.enable_https
-    recommendation     = "For production, restrict allowed_ssh_cidr to your specific IP address"
-    nsg_id             = oci_core_network_security_group.nsg.id
+    ssh_access_from   = var.allowed_ssh_cidr
+    https_access_from = var.allowed_https_cidr
+    vscode_port       = var.vscode_port
+    https_enabled     = var.enable_https
+    recommendation    = "For production, restrict allowed_ssh_cidr to your specific IP address"
+    nsg_id            = oci_core_network_security_group.nsg.id
   }
 }
 

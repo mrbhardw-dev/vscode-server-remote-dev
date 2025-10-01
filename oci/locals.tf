@@ -21,13 +21,13 @@ locals {
   region      = var.region
   environment = var.environment
   name_prefix = var.project_name
-  
+
   # Timestamp for unique resource naming
   timestamp = formatdate("YYYYMMDD-hhmmss", timestamp())
-  
+
   # Availability domain
   availability_domain = data.oci_identity_availability_domains.ads.availability_domains[var.availability_domain_number - 1].name
-  
+
   # Common freeform tags for all resources
   common_tags = merge(
     {
@@ -49,19 +49,19 @@ locals {
 locals {
   # Resource prefix for consistent naming
   resource_prefix = "${local.name_prefix}-${local.environment}"
-  
+
   # Standardized resource names
   resource_names = {
-    vcn                = "${local.resource_prefix}-vcn"
-    subnet             = "${local.resource_prefix}-subnet"
-    internet_gateway   = "${local.resource_prefix}-igw"
-    route_table        = "${local.resource_prefix}-rt"
-    security_list      = "${local.resource_prefix}-sl"
-    instance           = "${local.resource_prefix}-vm"
-    boot_volume        = "${local.resource_prefix}-boot"
-    public_ip          = "${local.resource_prefix}-ip"
+    vcn              = "${local.resource_prefix}-vcn"
+    subnet           = "${local.resource_prefix}-subnet"
+    internet_gateway = "${local.resource_prefix}-igw"
+    route_table      = "${local.resource_prefix}-rt"
+    security_list    = "${local.resource_prefix}-sl"
+    instance         = "${local.resource_prefix}-vm"
+    boot_volume      = "${local.resource_prefix}-boot"
+    public_ip        = "${local.resource_prefix}-ip"
   }
-  
+
   # Display names with environment
   display_names = {
     vcn      = "VS Code Server VCN (${local.environment})"
@@ -78,15 +78,15 @@ locals {
   # Network configuration
   vcn_cidr    = var.vcn_cidr_block
   subnet_cidr = var.subnet_cidr_block
-  
-  # DNS configuration
-  vcn_dns_label    = replace(local.resource_prefix, "-", "")
-  subnet_dns_label = "subnet${local.environment}"
-  
+
+  # DNS configuration (max 15 characters for OCI)
+  vcn_dns_label    = substr(replace("${local.name_prefix}${substr(local.environment, 0, 4)}", "-", ""), 0, 15)
+  subnet_dns_label = substr(replace("sub${local.environment}", "-", ""), 0, 15)
+
   # Security list rules
   ingress_rules = {
     ssh = {
-      protocol    = "6"  # TCP
+      protocol    = "6" # TCP
       source      = var.allowed_ssh_cidr
       source_type = "CIDR_BLOCK"
       tcp_options = {
@@ -96,7 +96,7 @@ locals {
       description = "Allow SSH access"
     }
     http = {
-      protocol    = "6"  # TCP
+      protocol    = "6" # TCP
       source      = var.allowed_https_cidr
       source_type = "CIDR_BLOCK"
       tcp_options = {
@@ -106,7 +106,7 @@ locals {
       description = "Allow HTTP access"
     }
     https = {
-      protocol    = "6"  # TCP
+      protocol    = "6" # TCP
       source      = var.allowed_https_cidr
       source_type = "CIDR_BLOCK"
       tcp_options = {
@@ -116,7 +116,7 @@ locals {
       description = "Allow HTTPS access"
     }
     vscode = {
-      protocol    = "6"  # TCP
+      protocol    = "6" # TCP
       source      = var.allowed_https_cidr
       source_type = "CIDR_BLOCK"
       tcp_options = {
@@ -126,7 +126,7 @@ locals {
       description = "Allow VS Code Server access"
     }
   }
-  
+
   egress_rules = {
     all = {
       protocol         = "all"
@@ -144,29 +144,29 @@ locals {
 locals {
   # Instance configuration
   instance_config = {
-    shape       = var.instance_shape
+    shape        = var.instance_shape
     display_name = local.resource_names.instance
-    
+
     # Shape configuration for Flex shapes
     shape_config = var.instance_shape == "VM.Standard.A1.Flex" ? {
       ocpus         = var.instance_ocpus
       memory_in_gbs = var.instance_memory_in_gbs
     } : null
-    
+
     # Source details
     source_details = {
       source_type             = "image"
       boot_volume_size_in_gbs = var.boot_volume_size_in_gbs
       image_id                = var.os_type == "ubuntu" ? data.oci_core_images.ubuntu.images[0].id : data.oci_core_images.oracle_linux.images[0].id
     }
-    
+
     # Metadata
     metadata = {
       ssh_authorized_keys = file(var.ssh_public_key_path)
-      user_data          = base64encode(local.cloud_init_script)
+      user_data           = base64encode(local.cloud_init_script)
     }
   }
-  
+
   # Cloud-init script for VS Code Server installation
   cloud_init_script = templatefile("${path.module}/scripts/cloud-init.yaml", {
     vscode_password = var.vscode_password
@@ -182,7 +182,7 @@ locals {
 locals {
   # SSH configuration
   ssh_public_key = fileexists(var.ssh_public_key_path) ? file(var.ssh_public_key_path) : ""
-  
+
   # Firewall ports
   allowed_ports = {
     ssh    = 22
@@ -190,12 +190,12 @@ locals {
     https  = 443
     vscode = var.vscode_port
   }
-  
+
   # Security recommendations
   security_notes = {
-    ssh_access    = "SSH access is allowed from: ${var.allowed_ssh_cidr}"
-    https_access  = "HTTPS access is allowed from: ${var.allowed_https_cidr}"
-    vscode_port   = "VS Code Server will run on port: ${var.vscode_port}"
+    ssh_access     = "SSH access is allowed from: ${var.allowed_ssh_cidr}"
+    https_access   = "HTTPS access is allowed from: ${var.allowed_https_cidr}"
+    vscode_port    = "VS Code Server will run on port: ${var.vscode_port}"
     recommendation = "For production, restrict allowed_ssh_cidr to your specific IP address"
   }
 }
@@ -211,23 +211,23 @@ locals {
     max_amd_instances = 2  # VM.Standard.E2.1.Micro
     max_arm_ocpus     = 4  # VM.Standard.A1.Flex
     max_arm_memory    = 24 # GB for VM.Standard.A1.Flex
-    
+
     # Always Free Storage
     max_boot_volume   = 200 # GB total across all instances
     max_block_storage = 200 # GB total
-    
+
     # Current usage
-    current_ocpus  = var.instance_shape == "VM.Standard.A1.Flex" ? var.instance_ocpus : 1
-    current_memory = var.instance_shape == "VM.Standard.A1.Flex" ? var.instance_memory_in_gbs : 1
+    current_ocpus   = var.instance_shape == "VM.Standard.A1.Flex" ? var.instance_ocpus : 1
+    current_memory  = var.instance_shape == "VM.Standard.A1.Flex" ? var.instance_memory_in_gbs : 1
     current_storage = var.boot_volume_size_in_gbs
-    
+
     # Recommendations
-    recommended_shape = "VM.Standard.A1.Flex"
-    recommended_ocpus = 2
-    recommended_memory = 12
+    recommended_shape   = "VM.Standard.A1.Flex"
+    recommended_ocpus   = 2
+    recommended_memory  = 12
     recommended_storage = 100
   }
-  
+
   # Cost optimization notes
   cost_notes = {
     shape   = var.instance_shape == "VM.Standard.A1.Flex" ? "Using ARM-based Always Free instance (recommended)" : "Using AMD-based Always Free instance"

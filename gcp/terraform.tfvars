@@ -15,6 +15,6 @@ service_account = {
 
 # VS Code Server configuration
 vscode_domain     = "vscode.mbtux.com"
-letsencrypt_email = "admin@mbtux.com"
+letsencrypt_email = "mritunjay.bhardwaj@mbtux.com"
 vscode_password   = "P@ssw0rd@123"
 admin_ip_cidr     = "208.127.201.111/32"

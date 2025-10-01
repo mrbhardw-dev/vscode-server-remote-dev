@@ -207,7 +207,7 @@ resource "oci_core_network_security_group" "nsg" {
 resource "oci_core_network_security_group_security_rule" "nsg_ssh" {
   network_security_group_id = oci_core_network_security_group.nsg.id
   direction                 = "INGRESS"
-  protocol                  = "6"  # TCP
+  protocol                  = "6" # TCP
   source                    = var.allowed_ssh_cidr
   source_type               = "CIDR_BLOCK"
   description               = "Allow SSH from specified CIDR"
@@ -224,7 +224,7 @@ resource "oci_core_network_security_group_security_rule" "nsg_ssh" {
 resource "oci_core_network_security_group_security_rule" "nsg_vscode" {
   network_security_group_id = oci_core_network_security_group.nsg.id
   direction                 = "INGRESS"
-  protocol                  = "6"  # TCP
+  protocol                  = "6" # TCP
   source                    = var.allowed_https_cidr
   source_type               = "CIDR_BLOCK"
   description               = "Allow VS Code Server access"
@@ -241,7 +241,7 @@ resource "oci_core_network_security_group_security_rule" "nsg_vscode" {
 resource "oci_core_network_security_group_security_rule" "nsg_https" {
   network_security_group_id = oci_core_network_security_group.nsg.id
   direction                 = "INGRESS"
-  protocol                  = "6"  # TCP
+  protocol                  = "6" # TCP
   source                    = var.allowed_https_cidr
   source_type               = "CIDR_BLOCK"
   description               = "Allow HTTPS access"

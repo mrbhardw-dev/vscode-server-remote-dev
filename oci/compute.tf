@@ -100,7 +100,7 @@ resource "oci_core_instance" "vscode_server" {
   # Lifecycle
   lifecycle {
     ignore_changes = [
-      source_details[0].source_id,  # Ignore image updates
+      source_details[0].source_id, # Ignore image updates
     ]
   }
 }
