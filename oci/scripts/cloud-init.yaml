@@ -1,0 +1,157 @@
+#cloud-config
+# =============================================================================
+# CLOUD-INIT CONFIGURATION FOR VS CODE SERVER ON OCI
+# =============================================================================
+# This cloud-init script installs and configures VS Code Server on OCI
+# Compatible with both Ubuntu and Oracle Linux
+# =============================================================================
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - curl
+  - wget
+  - git
+  - build-essential
+  - nginx
+  - certbot
+  - python3-certbot-nginx
+  - ufw
+  - htop
+  - vim
+  - tmux
+
+write_files:
+  # VS Code Server systemd service
+  - path: /etc/systemd/system/code-server.service
+    content: |
+      [Unit]
+      Description=VS Code Server
+      After=network.target
+
+      [Service]
+      Type=simple
+      User=ubuntu
+      WorkingDirectory=/home/ubuntu
+      Environment="PASSWORD=${vscode_password}"
+      ExecStart=/usr/bin/code-server --bind-addr 0.0.0.0:${vscode_port} --auth password
+      Restart=always
+      RestartSec=10
+
+      [Install]
+      WantedBy=multi-user.target
+    permissions: '0644'
+
+  # Nginx configuration for VS Code Server
+  - path: /etc/nginx/sites-available/vscode
+    content: |
+      server {
+          listen 80;
+          listen [::]:80;
+          server_name _;
+
+          location / {
+              proxy_pass http://localhost:${vscode_port};
+              proxy_set_header Host $host;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection upgrade;
+              proxy_set_header Accept-Encoding gzip;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+          }
+      }
+    permissions: '0644'
+
+  # Installation script
+  - path: /tmp/install-vscode.sh
+    content: |
+      #!/bin/bash
+      set -e
+
+      echo "Installing VS Code Server..."
+
+      # Install code-server
+      curl -fsSL https://code-server.dev/install.sh | sh
+
+      # Configure firewall
+      if command -v ufw &> /dev/null; then
+          ufw allow ${vscode_port}/tcp
+          ufw allow 80/tcp
+          ufw allow 443/tcp
+          ufw allow 22/tcp
+          echo "y" | ufw enable
+      fi
+
+      # Configure Nginx
+      if [ -f /etc/nginx/sites-available/vscode ]; then
+          ln -sf /etc/nginx/sites-available/vscode /etc/nginx/sites-enabled/
+          rm -f /etc/nginx/sites-enabled/default
+          nginx -t && systemctl restart nginx
+      fi
+
+      # Start and enable code-server
+      systemctl daemon-reload
+      systemctl enable code-server
+      systemctl start code-server
+
+      echo "VS Code Server installation complete!"
+      echo "Access at: http://$(curl -s ifconfig.me):${vscode_port}"
+    permissions: '0755'
+
+runcmd:
+  # Update system
+  - apt-get update || yum update -y
+  
+  # Install VS Code Server
+  - bash /tmp/install-vscode.sh
+  
+  # Set up automatic security updates (Ubuntu)
+  - |
+    if command -v apt-get &> /dev/null; then
+      apt-get install -y unattended-upgrades
+      dpkg-reconfigure -plow unattended-upgrades
+    fi
+  
+  # Configure timezone
+  - timedatectl set-timezone UTC
+  
+  # Enable and start services
+  - systemctl enable nginx
+  - systemctl start nginx
+  - systemctl enable code-server
+  - systemctl start code-server
+  
+  # Clean up
+  - apt-get clean || yum clean all
+  
+  # Log completion
+  - echo "Cloud-init setup complete at $(date)" >> /var/log/vscode-setup.log
+
+final_message: |
+  ========================================
+  VS Code Server Setup Complete!
+  ========================================
+  
+  Access your VS Code Server at:
+  - HTTP: http://YOUR_PUBLIC_IP:${vscode_port}
+  %{ if enable_https ~}
+  - HTTPS: https://YOUR_PUBLIC_IP
+  %{ endif ~}
+  
+  Password: ${vscode_password}
+  
+  SSH Access:
+  - Ubuntu: ssh ubuntu@YOUR_PUBLIC_IP
+  - Oracle Linux: ssh opc@YOUR_PUBLIC_IP
+  
+  Check status:
+  - sudo systemctl status code-server
+  - sudo systemctl status nginx
+  
+  View logs:
+  - sudo journalctl -u code-server -f
+  - sudo tail -f /var/log/vscode-setup.log
+  
+  ========================================

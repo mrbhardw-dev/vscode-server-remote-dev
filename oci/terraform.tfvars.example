@@ -1,0 +1,146 @@
+# =============================================================================
+# VS CODE SERVER ON OCI - EXAMPLE CONFIGURATION
+# =============================================================================
+# Copy this file to terraform.tfvars and update with your values
+# Optimized for OCI Always Free Tier
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# REQUIRED VARIABLES - OCI Authentication
+# -----------------------------------------------------------------------------
+
+# Your OCI tenancy OCID
+tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Your OCI user OCID
+user_ocid = "ocid1.user.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Fingerprint of your API key
+fingerprint = "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+
+# Path to your private API key file
+private_key_path = "~/.oci/oci_api_key.pem"
+
+# Compartment OCID where resources will be created
+compartment_id = "ocid1.compartment.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Password for VS Code Server (minimum 12 characters)
+vscode_password = "ChangeMe123!SecurePassword"
+
+# -----------------------------------------------------------------------------
+# OPTIONAL VARIABLES - Customize as needed
+# -----------------------------------------------------------------------------
+
+# Region (Always Free available in all regions)
+# region = "us-phoenix-1"  # or us-ashburn-1, eu-frankfurt-1, etc.
+
+# Availability Domain (1, 2, or 3)
+# availability_domain_number = 1
+
+# Network Configuration
+# vcn_cidr_block    = "10.0.0.0/16"
+# subnet_cidr_block = "10.0.1.0/24"
+
+# -----------------------------------------------------------------------------
+# COMPUTE INSTANCE CONFIGURATION (FREE TIER)
+# -----------------------------------------------------------------------------
+
+# Instance Shape - Choose one:
+# Option 1: AMD-based (Always Free - 2 instances max)
+# instance_shape = "VM.Standard.E2.1.Micro"  # 1 OCPU, 1 GB RAM
+
+# Option 2: ARM-based (Always Free - Recommended for better performance)
+instance_shape = "VM.Standard.A1.Flex"  # Flexible ARM shape
+
+# For ARM Flex shape only (max 4 OCPUs and 24 GB RAM total for Free Tier)
+instance_ocpus          = 2   # 1-4 OCPUs
+instance_memory_in_gbs  = 12  # 1-24 GB (6 GB per OCPU recommended)
+
+# Boot Volume Size (Free Tier: up to 200 GB total)
+# boot_volume_size_in_gbs = 100
+
+# Operating System
+# os_type = "ubuntu"  # or "oracle-linux"
+
+# -----------------------------------------------------------------------------
+# SECURITY CONFIGURATION
+# -----------------------------------------------------------------------------
+
+# SSH Public Key Path
+# ssh_public_key_path = "~/.ssh/id_rsa.pub"
+
+# Restrict SSH access to your IP (recommended for production)
+# allowed_ssh_cidr = "YOUR_IP_ADDRESS/32"
+
+# Restrict HTTPS access (optional)
+# allowed_https_cidr = "0.0.0.0/0"
+
+# -----------------------------------------------------------------------------
+# APPLICATION CONFIGURATION
+# -----------------------------------------------------------------------------
+
+# VS Code Server Port
+# vscode_port = 8080
+
+# Enable HTTPS with self-signed certificate
+# enable_https = true
+
+# -----------------------------------------------------------------------------
+# TAGS AND LABELS
+# -----------------------------------------------------------------------------
+
+# Environment
+# environment = "production"
+
+# Project Name
+# project_name = "vscode-server"
+
+# Additional Tags
+# freeform_tags = {
+#   "Owner"       = "DevOps Team"
+#   "CostCenter"  = "Engineering"
+#   "Department"  = "IT"
+# }
+
+# -----------------------------------------------------------------------------
+# MONITORING
+# -----------------------------------------------------------------------------
+
+# Enable OCI Monitoring
+# enable_monitoring = true
+
+# Notification Email (optional)
+# notification_email = "admin@example.com"
+
+# =============================================================================
+# FREE TIER RECOMMENDATIONS
+# =============================================================================
+#
+# For optimal Free Tier usage:
+#
+# 1. ARM Shape (Recommended):
+#    - instance_shape = "VM.Standard.A1.Flex"
+#    - instance_ocpus = 2
+#    - instance_memory_in_gbs = 12
+#    - boot_volume_size_in_gbs = 100
+#
+# 2. AMD Shape (Alternative):
+#    - instance_shape = "VM.Standard.E2.1.Micro"
+#    - boot_volume_size_in_gbs = 50
+#
+# 3. Storage Limits:
+#    - Total boot volume: 200 GB across all instances
+#    - Total block storage: 200 GB
+#
+# 4. Network:
+#    - Outbound data transfer: 10 TB/month
+#    - 2 VCNs per tenancy
+#
+# 5. Other Free Services:
+#    - Object Storage: 10 GB
+#    - Archive Storage: 10 GB
+#    - Load Balancer: 1 instance (10 Mbps)
+#    - Monitoring: All metrics
+#    - Notifications: 1 million per month
+#
+# =============================================================================
