@@ -137,8 +137,8 @@ variable "instance_shape" {
 
   validation {
     condition = contains([
-      "VM.Standard.E2.1.Micro",  # AMD - Always Free (1 OCPU, 1GB RAM)
-      "VM.Standard.A1.Flex"       # ARM - Always Free (up to 4 OCPUs, 24GB RAM)
+      "VM.Standard.E2.1.Micro", # AMD - Always Free (1 OCPU, 1GB RAM)
+      "VM.Standard.A1.Flex"     # ARM - Always Free (up to 4 OCPUs, 24GB RAM)
     ], var.instance_shape)
     error_message = "For Free Tier, use VM.Standard.E2.1.Micro (AMD) or VM.Standard.A1.Flex (ARM)."
   }

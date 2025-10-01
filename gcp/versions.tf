@@ -17,13 +17,13 @@ terraform {
     # Google Cloud Platform provider
     google = {
       source  = "hashicorp/google"
-      version = "~> 4.80.0"  # Last stable version as of knowledge cutoff
+      version = "~> 4.80.0" # Last stable version as of knowledge cutoff
     }
 
     # Google Cloud Platform Beta provider
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = "~> 4.80.0"  # Match stable provider version
+      version = "~> 4.80.0" # Match stable provider version
     }
 
     # External data source provider
@@ -64,7 +64,7 @@ provider "google" {
 
   # Uncomment and configure if using service account impersonation
   # impersonate_service_account = "service-account@project.iam.gserviceaccount.com"
-  
+
   # Add any additional provider configurations here
   # user_project_override = true
   # billing_project      = var.billing_project_id
@@ -75,7 +75,7 @@ provider "google-beta" {
   project = var.project_id
   region  = var.region
   zone    = var.zone
-  
+
   # Match the same configuration as the stable provider
   # impersonate_service_account = "service-account@project.iam.gserviceaccount.com"
 }

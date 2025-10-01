@@ -25,11 +25,11 @@ module "instance_template" {
   machine_type = var.machine_type # Machine type specification
 
   # Boot disk configuration
-  source_image_family  = "debian-11"        # OS image family for boot disk
-  source_image_project = "debian-cloud"     # Project containing the image
-  disk_size_gb         = 10                  # Boot disk size in GB
-  disk_type            = "pd-standard"       # Disk type for cost optimization
-  auto_delete          = true                # Delete disk with instance
+  source_image_family  = "debian-11"    # OS image family for boot disk
+  source_image_project = "debian-cloud" # Project containing the image
+  disk_size_gb         = 10             # Boot disk size in GB
+  disk_type            = "pd-standard"  # Disk type for cost optimization
+  auto_delete          = true           # Delete disk with instance
 
   # Network configuration
   subnetwork         = module.network.subnets_self_links[0] # Use first subnet from network module
@@ -65,16 +65,16 @@ module "compute_instance" {
   # Location configuration
   region = var.region # Target region
   zone   = var.zone   # Specific zone for instance placement
-  
+
   # Network configuration
   subnetwork         = module.network.subnets_self_links[0] # Same subnet as template
   subnetwork_project = var.project_id                       # Project containing the subnetwork
 
   # Instance configuration
-  num_instances       = var.num_instances                   # Number of instances to create
-  hostname            = "vscode"                            # Hostname for the VS Code server
+  num_instances       = var.num_instances                  # Number of instances to create
+  hostname            = "vscode"                           # Hostname for the VS Code server
   instance_template   = module.instance_template.self_link # Template to use
-  deletion_protection = false                               # Allow deletion via Terraform
+  deletion_protection = false                              # Allow deletion via Terraform
 
   # External network access configuration
   access_config = [{

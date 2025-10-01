@@ -151,7 +151,7 @@ variable "service_account" {
   })
   default = {
     email  = null
-    scopes = ["cloud-platform"]  # Minimal scopes required
+    scopes = ["cloud-platform"] # Minimal scopes required
   }
   description = "Service account configuration for compute instances"
 
@@ -267,7 +267,7 @@ variable "enable_backup" {
 
 variable "backup_schedule" {
   type        = string
-  default     = "0 2 * * *"  # 2 AM daily
+  default     = "0 2 * * *" # 2 AM daily
   description = "Cron schedule for backups"
 
   validation {
