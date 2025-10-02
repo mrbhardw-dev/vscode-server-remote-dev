@@ -26,7 +26,7 @@ terraform {
     # Google Cloud Platform Beta provider - preview features
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = "~> 6.0" # Keep in sync with stable provider
+      version = "~> 7.5" # Keep in sync with stable provider
     }
 
     # Null provider - for local execution and triggers
