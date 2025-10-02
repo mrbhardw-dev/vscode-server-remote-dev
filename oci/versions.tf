@@ -42,7 +42,7 @@ terraform {
     # TLS for SSH key generation
     tls = {
       source  = "hashicorp/tls"
-      version = "~> 4.0.0"
+      version = "~> 4.1.0"
     }
   }
 
