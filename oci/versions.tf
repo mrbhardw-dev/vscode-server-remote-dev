@@ -18,7 +18,7 @@ terraform {
     # Oracle Cloud Infrastructure provider
     oci = {
       source  = "oracle/oci"
-      version = "~> 5.20.0"
+      version = "~> 7.21.0"
     }
 
     # Template provider for startup scripts
