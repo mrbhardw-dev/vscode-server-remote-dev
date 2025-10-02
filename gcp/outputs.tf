@@ -60,16 +60,23 @@ output "subnets" {
 output "firewall_rules" {
   description = "List of created firewall rules"
   value = [
-    for rule in module.network.firewall_rules : {
-      name          = rule.name
-      direction     = rule.direction
-      priority      = rule.priority
-      source_ranges = rule.source_ranges
-      target_tags   = rule.target_tags
-      allow = [{
-        protocol = rule.allow[0].protocol
-        ports    = rule.allow[0].ports
-      }]
+    {
+      name          = google_compute_firewall.allow_ssh_iap.name
+      direction     = "INGRESS"
+      source_ranges = google_compute_firewall.allow_ssh_iap.source_ranges
+      target_tags   = google_compute_firewall.allow_ssh_iap.target_tags
+    },
+    {
+      name          = google_compute_firewall.allow_http.name
+      direction     = "INGRESS"
+      source_ranges = google_compute_firewall.allow_http.source_ranges
+      target_tags   = google_compute_firewall.allow_http.target_tags
+    },
+    {
+      name          = google_compute_firewall.allow_https.name
+      direction     = "INGRESS"
+      source_ranges = google_compute_firewall.allow_https.source_ranges
+      target_tags   = google_compute_firewall.allow_https.target_tags
     }
   ]
 }
@@ -80,27 +87,27 @@ output "firewall_rules" {
 
 output "instance_names" {
   description = "List of created instance names"
-  value       = module.compute_instance.instance_names
+  value       = google_compute_instance.vscode_server[*].name
 }
 
 output "instance_self_links" {
   description = "List of instance self-links"
-  value       = module.compute_instance.instances_self_links
+  value       = google_compute_instance.vscode_server[*].self_link
 }
 
 output "instance_ips" {
   description = "List of instance IP addresses"
   value = {
-    internal = module.compute_instance.instances_network_ips
-    external = module.compute_instance.instances_nat_ips
+    internal = google_compute_instance.vscode_server[*].network_interface[0].network_ip
+    external = google_compute_instance.vscode_server[*].network_interface[0].access_config[0].nat_ip
   }
 }
 
 output "service_account" {
   description = "Service account details used by the instances"
   value = {
-    email  = local.service_account.email
-    scopes = local.service_account.scopes
+    email  = var.service_account.email
+    scopes = var.service_account.scopes
   }
   sensitive = true
 }
@@ -112,10 +119,9 @@ output "service_account" {
 output "security_groups" {
   description = "Security group IDs and names"
   value = {
-    ssh      = module.network.firewall_rules[0].id
-    http     = module.network.firewall_rules[1].id
-    https    = module.network.firewall_rules[2].id
-    internal = module.network.firewall_rules[3].id
+    ssh   = google_compute_firewall.allow_ssh_iap.id
+    http  = google_compute_firewall.allow_http.id
+    https = google_compute_firewall.allow_https.id
   }
 }
 
@@ -128,7 +134,7 @@ output "access_instructions" {
   value = var.vscode_domain != "" ? [
     "VS Code Server will be available at: https://${var.vscode_domain}",
     "Initial password: ${var.vscode_password}",
-    "SSH Access: gcloud compute ssh ${local.resource_prefix}-vm-0 --zone ${var.zone} --project ${var.project_id}"
+    "SSH Access: gcloud compute ssh ${local.name_prefix}-0 --zone ${var.zone} --project ${var.project_id}"
   ] : ["VS Code Server domain not configured"]
   sensitive = true
 }
@@ -147,7 +153,7 @@ output "monitoring_links" {
 
 output "labels" {
   description = "Standardized labels applied to all resources"
-  value       = module.labels.tags
+  value       = local.common_labels
 }
 
 # =============================================================================
@@ -176,17 +182,17 @@ output "module_versions" {
 # VS Code Server instance information
 output "vscode_instance_name" {
   description = "Name of the VS Code Server compute instance"
-  value       = module.compute_instance.instances_details[0].name
+  value       = google_compute_instance.vscode_server[0].name
 }
 
 output "vscode_external_ip" {
   description = "External IP address of the VS Code Server instance"
-  value       = module.compute_instance.instances_details[0].network_interface[0].access_config[0].nat_ip
+  value       = google_compute_instance.vscode_server[0].network_interface[0].access_config[0].nat_ip
 }
 
 output "vscode_internal_ip" {
   description = "Internal IP address of the VS Code Server instance"
-  value       = module.compute_instance.instances_details[0].network_interface[0].network_ip
+  value       = google_compute_instance.vscode_server[0].network_interface[0].network_ip
 }
 
 # -----------------------------------------------------------------------------
@@ -197,8 +203,8 @@ output "vscode_access_info" {
   description = "VS Code Server access information"
   value = {
     domain_url = "https://${local.vscode_config.domain}"
-    http_url   = "http://${module.compute_instance.instances_details[0].network_interface[0].access_config[0].nat_ip}:80"
-    https_url  = "https://${module.compute_instance.instances_details[0].network_interface[0].access_config[0].nat_ip}:443"
+    http_url   = "http://${google_compute_instance.vscode_server[0].network_interface[0].access_config[0].nat_ip}:80"
+    https_url  = "https://${google_compute_instance.vscode_server[0].network_interface[0].access_config[0].nat_ip}:443"
     password   = "Check terraform.tfvars for configured password"
   }
 }
@@ -209,5 +215,5 @@ output "vscode_access_info" {
 
 output "ssh_command" {
   description = "gcloud command to SSH into the VS Code Server instance"
-  value       = "gcloud compute ssh ${module.compute_instance.instances_details[0].name} --zone=${module.compute_instance.instances_details[0].zone} --tunnel-through-iap"
+  value       = "gcloud compute ssh ${google_compute_instance.vscode_server[0].name} --zone=${google_compute_instance.vscode_server[0].zone} --tunnel-through-iap"
 }

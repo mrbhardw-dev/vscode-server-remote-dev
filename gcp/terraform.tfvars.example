@@ -1,115 +1,71 @@
 # =============================================================================
-# VS CODE SERVER - EXAMPLE CONFIGURATION
+# TERRAFORM VARIABLES EXAMPLE
 # =============================================================================
-# Copy this file to terraform.tfvars and update the values with your configuration
+# Copy this file to terraform.tfvars and update the values for your deployment
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # REQUIRED VARIABLES
 # -----------------------------------------------------------------------------
 
-# GCP Project ID where resources will be created
-project_id = "your-project-id"
+# GCP Project ID
+project_id = "your-gcp-project-id"
 
-# Domain name for VS Code Server (e.g., code.yourdomain.com)
-vscode_domain = "code.example.com"
+# GCP Region
+region = "europe-west2"
 
-# Password for VS Code Server authentication
-vscode_password = "ChangeMe123!"
+# GCP Zone
+zone = "europe-west2-a"
 
-# Email for Let's Encrypt certificate notifications
-letsencrypt_email = "admin@example.com"
+# Path to service account JSON key file
+credentials_file = "secrets/your-service-account-key.json"
 
-# Path to GCP service account key file
-credentials_file = "~/.config/gcloud/credentials.json"
+# VS Code Server domain (for SSL certificate)
+vscode_domain = "code.yourdomain.com"
+
+# VS Code Server password
+vscode_password = "YourSecurePassword123"
+
+# Let's Encrypt email for SSL certificate
+letsencrypt_email = "your-email@yourdomain.com"
+
+# Your public IP for firewall restrictions
+admin_ip_cidr = "YOUR_PUBLIC_IP/32"
 
 # -----------------------------------------------------------------------------
-# OPTIONAL VARIABLES - Uncomment and modify as needed
+# OPTIONAL VARIABLES
 # -----------------------------------------------------------------------------
 
-# Deployment environment (dev, staging, prod)
-# environment = "production"
-
-# GCP region and zone
-# region = "europe-west2"
-# zone   = "europe-west2-b"
-
-# Compute instance configuration
-# machine_type      = "e2-micro"
-# boot_disk_size_gb = 30
-# boot_disk_type    = "pd-standard"
-
-# Network configuration
-# network_cidr = "10.0.0.0/16"
-# subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
-
-# Security settings
-# admin_ip_cidr      = "203.0.113.42/32"  # Restrict admin access to specific IP
-# enable_os_login    = true
-# enable_monitoring  = true
-# enable_backup      = false
-# backup_schedule    = "0 2 * * *"  # 2 AM daily
-
-# Additional tags for resources
-# additional_tags = {
-#   team        = "devops"
-#   cost-center = "engineering"
-#   repository  = "github.com/your-org/vscode-server-gcp"
-#   environment = "production"
-# }
-
-# Notification email for alerts
-# notification_email = "alerts@example.com"
+# Instance configuration
+machine_type    = "e2-micro"
+boot_disk_image = "projects/debian-cloud/global/images/family/debian-11"
+boot_disk_size_gb = 30
+boot_disk_type = "pd-standard"
 
 # Service account configuration
-# service_account = {
-#   email  = "vscode-server@your-project.iam.gserviceaccount.com"
-#   scopes = ["cloud-platform"]
-# }
+service_account = {
+  email  = "your-service-account@your-project.iam.gserviceaccount.com"
+  scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+}
 
-# Number of instances to create
-# num_instances = 1
+# Network configuration
+network_cidr = "10.0.0.0/16"
+subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
 
-# Auto-delete disk when instance is deleted
-# auto_delete_disk = true
+# Security settings
+enable_monitoring = true
+enable_os_login = true
+enable_backup = false
 
-# -----------------------------------------------------------------------------
-# ADVANCED CONFIGURATION - Modify only if you know what you're doing
-# -----------------------------------------------------------------------------
+# Scaling
+num_instances = 1
+auto_delete_disk = true
 
-# Custom boot disk image
-# boot_disk_image = "debian-cloud/debian-11-bullseye-v20230629"
+# Environment
+environment = "production"
 
-# Custom startup script path
-# startup_script_path = "scripts/startup.sh"
-
-# Custom metadata for instances
-# instance_metadata = {
-#   enable-oslogin          = "TRUE"
-#   block-project-ssh-keys = "TRUE"
-#   serial-port-enable     = "TRUE"
-# }
-
-# Custom labels for all resources
-# labels = {
-#   application = "vscode-server"
-#   environment = "production"
-#   managed-by  = "terraform"
-# }
-
-# -----------------------------------------------------------------------------
-# LOOKUP VARIABLES - These are computed values, do not modify
-# -----------------------------------------------------------------------------
-# These variables are computed based on other inputs and should not be modified
-# directly. They are shown here for reference only.
-#
-# name_prefix    = "vscode-server-${environment}"
-# resource_names = {
-#   vpc_network     = "${name_prefix}-vpc"
-#   subnet          = "${name_prefix}-subnet"
-#   firewall        = "${name_prefix}-fw"
-#   instance        = "${name_prefix}-vm"
-#   instance_group  = "${name_prefix}-ig"
-#   service_account = "${name_prefix}-sa"
-# }
-# =============================================================================
+# Additional tags
+additional_tags = {
+  "CostCenter" = "Engineering"
+  "Project"    = "VS Code Server"
+}

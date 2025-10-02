@@ -1,0 +1,91 @@
+name: Security and Code Quality Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  terraform-security:
+    name: Terraform Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.6.0'
+
+      - name: Run TFSec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: gcp/
+          soft_fail: true
+
+      - name: Run TFSec for OCI
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: oci/
+          soft_fail: true
+
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.6.0'
+
+      - name: Terraform Format Check
+        run: |
+          terraform fmt -check -recursive gcp/
+          terraform fmt -check -recursive oci/
+
+      - name: Terraform Validate GCP
+        run: |
+          cd gcp/
+          terraform init -backend=false
+          terraform validate
+
+      - name: Terraform Validate OCI
+        run: |
+          cd oci/
+          terraform init
+          terraform validate
+
+      - name: Check for hardcoded secrets
+        run: |
+          # Check for potential secrets in Terraform files
+          grep -r "password\|secret\|key" gcp/ oci/ --include="*.tf" --include="*.tfvars" || true
+          # This is a basic check - consider using tools like truffleHog for more comprehensive scanning
