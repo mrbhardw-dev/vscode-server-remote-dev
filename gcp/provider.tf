@@ -20,7 +20,7 @@ terraform {
     # Google Cloud Platform provider - stable features
     google = {
       source  = "hashicorp/google"
-      version = "~> 6.0" # Use latest 6.x version for stability
+      version = "~> 7.5" # Use latest 6.x version for stability
     }
 
     # Google Cloud Platform Beta provider - preview features
