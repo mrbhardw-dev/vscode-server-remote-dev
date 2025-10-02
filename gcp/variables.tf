@@ -133,17 +133,6 @@ variable "boot_disk_type" {
 # 5. SECURITY & ACCESS
 # =============================================================================
 
-variable "admin_ip_cidr" {
-  type        = string
-  default     = "0.0.0.0/0"
-  description = "CIDR block for administrative access (restrict to your IP in production)"
-
-  validation {
-    condition     = can(cidrnetmask(var.admin_ip_cidr))
-    error_message = "Must be a valid CIDR notation."
-  }
-}
-
 variable "service_account" {
   type = object({
     email  = string
@@ -271,8 +260,8 @@ variable "backup_schedule" {
   description = "Cron schedule for backups"
 
   validation {
-    condition     = can(regex("^(([0-9]|,|-|/|\\.|\\*|\\s*)+ ){4,5}[0-9]?$", var.backup_schedule))
-    error_message = "Must be a valid cron expression."
+    condition     = can(regex("^\\s*([0-9]|\\*|,|-|/)+\\s+([0-9]|\\*|,|-|/)+\\s+([0-9]|\\*|,|-|/)+\\s+([0-9]|\\*|,|-|/)+\\s+([0-9]|\\*|,|-|/)+\\s*$", var.backup_schedule))
+    error_message = "Must be a valid cron expression (5 fields: minute hour day month weekday)."
   }
 }
 
@@ -303,16 +292,6 @@ variable "managed_by" {
   validation {
     condition     = can(regex("^[^@ ]+@[^@ ]+\\.[^@ ]+$", var.managed_by))
     error_message = "Must be a valid email address."
-  }
-}
-variable "machine_type" {
-  type        = string
-  default     = "e2-micro"
-  description = "The machine type for compute instances (e.g., e2-micro, n1-standard-1, e2-medium)"
-
-  validation {
-    condition     = can(regex("^(e2|n1|n2|c2|m1|m2|a2|t2d|c3|m3|g2)-.+", var.machine_type))
-    error_message = "Machine type must be a valid GCP machine type format."
   }
 }
 
@@ -363,43 +342,6 @@ variable "network_tier" {
 # -----------------------------------------------------------------------------
 # VS CODE SERVER CONFIGURATION
 # -----------------------------------------------------------------------------
-
-# Domain name for VS Code Server
-variable "vscode_domain" {
-  type        = string
-  default     = "vscode.mbtux.com"
-  description = "Domain name for the VS Code Server (must have valid DNS pointing to the instance)"
-
-  validation {
-    condition     = can(regex("^[a-z0-9][a-z0-9.-]*[a-z0-9]\\.[a-z]{2,}$", var.vscode_domain))
-    error_message = "VS Code domain must be a valid domain name format."
-  }
-}
-
-# Admin email for Let's Encrypt certificate
-variable "letsencrypt_email" {
-  type        = string
-  default     = "admin@mbtux.com"
-  description = "Email address for Let's Encrypt certificate registration and notifications"
-
-  validation {
-    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.letsencrypt_email))
-    error_message = "Let's Encrypt email must be a valid email address format."
-  }
-}
-
-# VS Code Server password
-variable "vscode_password" {
-  type        = string
-  default     = "P@ssw0rd@123"
-  description = "Password for VS Code Server authentication"
-  sensitive   = true
-
-  validation {
-    condition     = length(var.vscode_password) >= 8
-    error_message = "VS Code password must be at least 8 characters long."
-  }
-}
 
 # Your public IP for firewall restrictions
 variable "admin_ip_cidr" {
