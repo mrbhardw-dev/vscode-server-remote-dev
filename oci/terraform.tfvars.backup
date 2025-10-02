@@ -10,8 +10,8 @@
 # -----------------------------------------------------------------------------
 tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaayovub2jj7ege5ceiafsxinoae7m4h676sruh6suucpyfkmrvpq3q"
 user_ocid        = "ocid1.user.oc1..aaaaaaaalmxpngsey463cewp3v3fnafwgf736fsa6konrb6tqqj5qsfhzd4q"
-fingerprint      = "7a:25:7e:26:80:ca:89:6f:f1:b4:4b:4d:3d:ed:30:8c"
-private_key_path = "/home/mrbhardw/.oci/oci_api_key.pem"
+fingerprint      = "1d:45:4d:d8:5a:7e:e1:e5:28:59:94:57:8f:62:b0:cb"
+private_key_path = "./secrets/oci_api_key_unencrypted.pem"
 compartment_id   = "ocid1.tenancy.oc1..aaaaaaaayovub2jj7ege5ceiafsxinoae7m4h676sruh6suucpyfkmrvpq3q"
 region           = "uk-london-1"
 
@@ -23,9 +23,9 @@ vscode_password = "P@ssw0rd@12345678"
 # -----------------------------------------------------------------------------
 # Instance Configuration (OPTIONAL)
 # -----------------------------------------------------------------------------
-instance_shape          = "VM.Standard.A1.Flex"
-instance_ocpus          = 2
-instance_memory_in_gbs  = 12
+instance_shape = "VM.Standard.E2.1.Micro"
+# instance_ocpus = 2
+# instance_memory_in_gbs = 12
 boot_volume_size_in_gbs = 100
 os_type                 = "ubuntu"
 
@@ -35,7 +35,7 @@ os_type                 = "ubuntu"
 ssh_public_key_path = "~/.ssh/id_rsa.pub"
 
 # Restrict SSH access to your IP (recommended)
-# allowed_ssh_cidr = "YOUR_IP/32"
+# allowed_ssh_cidr = "37.228.200.74/32"
 
 # -----------------------------------------------------------------------------
 # Tags & Monitoring (OPTIONAL)
