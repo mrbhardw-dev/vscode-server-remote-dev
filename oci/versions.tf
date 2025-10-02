@@ -66,7 +66,6 @@ provider "oci" {
   private_key_path = var.private_key_path
   region           = var.region
 }
-
 # =============================================================================
 # DATA SOURCES
 # =============================================================================
@@ -90,7 +89,7 @@ data "oci_core_images" "oracle_linux" {
 data "oci_core_images" "ubuntu" {
   compartment_id           = var.compartment_id
   operating_system         = "Canonical Ubuntu"
-  operating_system_version = "22.04"
+  operating_system_version = "24.04"
   shape                    = var.instance_shape
   sort_by                  = "TIMECREATED"
   sort_order               = "DESC"
