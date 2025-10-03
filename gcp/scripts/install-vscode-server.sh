@@ -1,185 +1,111 @@
 #!/bin/bash
+set -euxo pipefail
+
 # =============================================================================
-# VS Code Server Installation Script with Let's Encrypt SSL
-# =============================================================================
-# This script installs and configures VS Code Server (code-server) with:
-# - Let's Encrypt SSL certificates via Certbot
-# - Nginx reverse proxy for HTTPS termination
-# - Development tools (Git, Terraform)
-# - Automatic certificate renewal
+# VS Code Server (code-server) Installation Script
 # =============================================================================
 
-set -e  # Exit on any error
+# --- Log function ---
+log() { echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"; }
 
-# -----------------------------------------------------------------------------
-# ENVIRONMENT VARIABLES
-# -----------------------------------------------------------------------------
-export HOME=/root
-export PATH=$PATH:/usr/local/bin
+log "Starting VS Code Server setup on Ubuntu 22..."
 
-# Configuration from Terraform template variables
-DOMAIN="${vscode_domain}"
-PASSWORD="${vscode_password}"
-EMAIL="${letsencrypt_email}"
-BIND_ADDR="${bind_addr}"
-LOG_FILE="${log_file}"
+# --- Environment variables (from your Terraform input) ---
+CODE_SERVER_USER="coder"
+CODE_SERVER_PASSWORD="P@ssw0rd@123"
+CODE_SERVER_DOMAIN="vscode.mbtux.com"
+LETSENCRYPT_EMAIL="mritunjay.bhardwaj@mbtux.com"
+HTTP_PORT="8080"
 
-# -----------------------------------------------------------------------------
-# SYSTEM SETUP AND PACKAGE INSTALLATION
-# -----------------------------------------------------------------------------
-echo "Starting VS Code Server installation at $(date)"
+# --- Create dedicated user ---
+log "Creating user '${CODE_SERVER_USER}'..."
+if ! id -u "${CODE_SERVER_USER}" >/dev/null 2>&1; then
+    useradd -m -s /bin/bash "${CODE_SERVER_USER}"
+    usermod -aG sudo "${CODE_SERVER_USER}"
+    log "User created and added to sudoers group."
+else
+    log "User already exists."
+fi
 
-# Update system packages
-apt-get update
+# Ensure proper home directory permissions BEFORE install
+log "Setting initial permissions for /home/${CODE_SERVER_USER}..."
+mkdir -p /home/${CODE_SERVER_USER}/.cache /home/${CODE_SERVER_USER}/.local/share/code-server/extensions
+chown -R ${CODE_SERVER_USER}:${CODE_SERVER_USER} /home/${CODE_SERVER_USER}
+chmod -R 700 /home/${CODE_SERVER_USER}
 
-# Install essential development tools and certbot
-apt-get install -y \
-    curl \
-    wget \
-    git \
-    unzip \
-    software-properties-common \
-    gnupg \
-    lsb-release \
-    python3-certbot-nginx \
-    nginx
+# --- Update system and install dependencies ---
+log "Installing dependencies (curl, gnupg2, sudo, caddy prerequisites)..."
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y curl gnupg2 software-properties-common sudo debian-keyring debian-archive-keyring apt-transport-https
 
-# -----------------------------------------------------------------------------
-# TERRAFORM INSTALLATION
-# -----------------------------------------------------------------------------
-echo "Installing Terraform..."
-
-# Add HashiCorp GPG key and repository
-wget -O- https://apt.releases.hashicorp.com/gpg | \
-    gpg --dearmor | \
-    tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
-
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
-    tee /etc/apt/sources.list.d/hashicorp.list
-
-apt-get update && apt-get install -y terraform
-
-# -----------------------------------------------------------------------------
-# CODE-SERVER INSTALLATION
-# -----------------------------------------------------------------------------
-echo "Installing code-server..."
-
-# Install code-server using official installer
+# -------------------------------------------------------------
+# --- Install code-server (FINAL FIX for HOME variable) ---
+log "Installing code-server as root with HOME set..."
+# Explicitly set HOME to /root for the non-interactive shell to resolve 
+# the 'HOME: parameter not set' error during 'curl | sh' execution.
+export HOME="/root" 
 curl -fsSL https://code-server.dev/install.sh | sh
+# -------------------------------------------------------------
 
-# Create code-server configuration directory
-mkdir -p ~/.config/code-server
+# Re-assert user permissions after the installation
+log "Re-setting permissions for /home/${CODE_SERVER_USER} after code-server install..."
+# Reset HOME to ensure chown command is correct if the script uses it implicitly
+export HOME="/home/${CODE_SERVER_USER}" 
+chown -R ${CODE_SERVER_USER}:${CODE_SERVER_USER} /home/${CODE_SERVER_USER}
+chmod -R 700 /home/${CODE_SERVER_USER}
 
-# Configure code-server for HTTP (will be proxied through nginx with SSL)
-cat > ~/.config/code-server/config.yaml << EOF
-bind-addr: $${BIND_ADDR}
+# --- Configure code-server ---
+log "Configuring code-server..."
+mkdir -p /home/${CODE_SERVER_USER}/.config/code-server
+cat > /home/${CODE_SERVER_USER}/.config/code-server/config.yaml <<EOF
+bind-addr: 127.0.0.1:${HTTP_PORT}
 auth: password
-password: $${PASSWORD}
+password: ${CODE_SERVER_PASSWORD}
 cert: false
 EOF
+chown -R ${CODE_SERVER_USER}:${CODE_SERVER_USER} /home/${CODE_SERVER_USER}/.config
 
-# -----------------------------------------------------------------------------
-# NGINX CONFIGURATION AND SSL SETUP
-# -----------------------------------------------------------------------------
-echo "Configuring Nginx and Let's Encrypt..."
+# --- Setup systemd service ---
+log "Setting up systemd service..."
+cat > /etc/systemd/system/code-server.service <<EOF
+[Unit]
+Description=code-server
+After=network.target
 
-# Start and enable nginx service
-systemctl start nginx
-systemctl enable nginx
+[Service]
+Type=simple
+User=${CODE_SERVER_USER}
+Group=${CODE_SERVER_USER}
+ExecStart=/usr/bin/code-server --config /home/${CODE_SERVER_USER}/.config/code-server/config.yaml
+Restart=always
 
-# Create initial nginx configuration for Let's Encrypt verification
-cat > /etc/nginx/sites-available/code-server << EOF
-server {
-    listen 80;
-    server_name $${DOMAIN};
-    
-    location / {
-        proxy_pass http://$${BIND_ADDR};
-        proxy_set_header Host \$host;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection upgrade;
-        proxy_set_header Accept-Encoding gzip;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now code-server
+
+# --- Install Caddy for HTTPS ---
+log "Installing Caddy..."
+# Configuration setup for Caddy's repository
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
+apt-get update -y
+apt-get install -y caddy
+
+# --- Configure Caddy ---
+log "Creating Caddyfile for reverse proxy and HTTPS..."
+cat > /etc/caddy/Caddyfile <<EOF
+${CODE_SERVER_DOMAIN} {
+    reverse_proxy 127.0.0.1:${HTTP_PORT}
+    tls ${LETSENCRYPT_EMAIL}
 }
 EOF
 
-# Enable the nginx site configuration
-ln -sf /etc/nginx/sites-available/code-server /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
+# Ensure Caddy service is running and configured
+systemctl enable --now caddy
+systemctl reload caddy
 
-# Test and reload nginx configuration
-nginx -t && systemctl reload nginx
-
-# Wait for nginx to be ready
-sleep 10
-
-# Obtain Let's Encrypt certificate
-echo "Obtaining Let's Encrypt certificate for $${DOMAIN}..."
-certbot --nginx --non-interactive --agree-tos --email "$${EMAIL}" -d "$${DOMAIN}"
-
-# Update nginx configuration with HTTPS redirect and SSL
-cat > /etc/nginx/sites-available/code-server << EOF
-# HTTP to HTTPS redirect
-server {
-    listen 80;
-    server_name $${DOMAIN};
-    return 301 https://\$server_name\$request_uri;
-}
-
-# HTTPS server with SSL termination
-server {
-    listen 443 ssl http2;
-    server_name $${DOMAIN};
-    
-    # SSL certificate configuration
-    ssl_certificate /etc/letsencrypt/live/$${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$${DOMAIN}/privkey.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384;
-    ssl_prefer_server_ciphers off;
-    
-    # Proxy configuration for code-server
-    location / {
-        proxy_pass http://$${BIND_ADDR};
-        proxy_set_header Host \$host;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection upgrade;
-        proxy_set_header Accept-Encoding gzip;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-}
-EOF
-
-# Test and reload nginx with new SSL configuration
-nginx -t && systemctl reload nginx
-
-# -----------------------------------------------------------------------------
-# CODE-SERVER SERVICE STARTUP
-# -----------------------------------------------------------------------------
-echo "Starting code-server service..."
-
-# Start code-server in background (nginx will proxy HTTPS requests)
-nohup code-server --bind-addr "$${BIND_ADDR}" > "$${LOG_FILE}" 2>&1 &
-
-# -----------------------------------------------------------------------------
-# CERTIFICATE RENEWAL SETUP
-# -----------------------------------------------------------------------------
-echo "Setting up automatic certificate renewal..."
-
-# Setup automatic certificate renewal via cron
-echo "0 12 * * * /usr/bin/certbot renew --quiet" | crontab -
-
-# -----------------------------------------------------------------------------
-# INSTALLATION COMPLETION LOGGING
-# -----------------------------------------------------------------------------
-echo "Code-server with Let's Encrypt installation completed at $(date)" >> /var/log/code-server-install.log
-echo "Domain: $${DOMAIN}" >> /var/log/code-server-install.log
-echo "Certificate location: /etc/letsencrypt/live/$${DOMAIN}/" >> /var/log/code-server-install.log
-echo "Log file: $${LOG_FILE}" >> /var/log/code-server-install.log
-
-echo "VS Code Server installation completed successfully!"
+log "Setup complete! Access your VS Code Server at https://${CODE_SERVER_DOMAIN}"
