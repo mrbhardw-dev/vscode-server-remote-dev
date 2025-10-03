@@ -9,7 +9,7 @@ Deploy VS Code Server on Oracle Cloud Infrastructure using **Always Free Tier** 
 ## ✨ Features
 
 - **💰 Always Free** - Uses OCI Always Free Tier resources ($0/month)
-- **🚀 High Performance** - ARM-based Ampere A1 processors (up to 4 OCPUs, 24 GB RAM)
+- **🚀 High Performance** - ARM-based Ampere A1 Flex instances (up to 4 OCPUs, 24 GB RAM)
 - **🔒 Secure** - VCN with security lists and network security groups
 - **📦 Automated** - Complete setup with cloud-init
 - **🌐 Web-based IDE** - Access VS Code from anywhere
@@ -146,11 +146,11 @@ terraform apply
 ### Step 4: Access
 
 ```bash
-# Get access information
-terraform output access_instructions
+# Get the public IP address
+terraform output public_ip
 
-# Access VS Code Server
-# Open browser to: http://YOUR_PUBLIC_IP:8080
+# Access VS Code Server in your browser:
+# http://<YOUR_PUBLIC_IP>:8080
 ```
 
 ## 🎨 Configuration Options
