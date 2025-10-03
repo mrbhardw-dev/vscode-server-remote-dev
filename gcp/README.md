@@ -1,35 +1,24 @@
 # 🚀 VS Code Server on Google Cloud Platform
 
-[![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
-[![Google Cloud](https://img.shields.io/badge/GoogleCloud-%234285F4.svg?style=for-the-badge&logo=google-cloud&logoColor=white)](https://cloud.google.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/) [![Google Cloud](https://img.shields.io/badge/GoogleCloud-%234285F4.svg?style=for-the-badge&logo=google-cloud&logoColor=white)](https://cloud.google.com/)
 
-A production-grade Terraform module for deploying VS Code Server on Google Cloud Platform with security, scalability, and maintainability in mind.
+This Terraform configuration deploys a VS Code Server instance on Google Cloud Platform (GCP). It is designed to be secure, maintainable, and easy to use, providing a powerful remote development environment in the cloud.
 
 ## 🏗 Architecture
 
 ```mermaid
 graph TD
-    subgraph GCP_Project[GCP Project]
-        subgraph VPC[VPC Network]
-            subgraph Subnet1[Subnet 1 - 10.0.1.0/24]
-                VM[Compute Instance]
-            end
-            subgraph Subnet2[Subnet 2 - 10.0.2.0/24]
-                LB[Load Balancer]
-            end
+    subgraph "GCP Project"
+        subgraph "VPC Network"
+            GCE["Compute Instance (VS Code Server)"]
         end
-        
-        IAM[IAM & Service Accounts]
-        FW[Firewall Rules]
-        
-        VM -->|Internal Traffic| LB
-        Internet -->|HTTPS :443| LB
-        LB -->|Forward Traffic| VM
+        Firewall["Firewall Rules (HTTP/HTTPS)"]
+        PublicIP["Static Public IP"]
     end
-    
-    Developer[Developer] -->|SSH/HTTPS| VM
-    Developer -->|Cloud Console| GCP_Project
+
+    User[Developer] -- "HTTPS (port 443)" --> PublicIP
+    PublicIP -- "Forwards to" --> GCE
+    GCE -- "Serves" --> User
 ```
 
 ## ✨ Features
