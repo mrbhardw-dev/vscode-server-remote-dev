@@ -21,11 +21,10 @@ resource "oci_core_vcn" "vcn" {
 # =============================================================================
 # INTERNET GATEWAY
 # =============================================================================
-
 resource "oci_core_internet_gateway" "igw" {
   compartment_id = var.compartment_id
   vcn_id         = oci_core_vcn.vcn.id
-  display_name   = local.display_names.igw
+  display_name   = "${local.resource_prefix}-igw"
   enabled        = true
 
   freeform_tags = local.common_tags
@@ -35,11 +34,10 @@ resource "oci_core_internet_gateway" "igw" {
 # =============================================================================
 # ROUTE TABLE
 # =============================================================================
-
 resource "oci_core_route_table" "rt" {
   compartment_id = var.compartment_id
   vcn_id         = oci_core_vcn.vcn.id
-  display_name   = local.display_names.route_table
+  display_name   = "${local.resource_prefix}-rt"
 
   route_rules {
     destination       = "0.0.0.0/0"
@@ -54,16 +52,14 @@ resource "oci_core_route_table" "rt" {
 # =============================================================================
 # SUBNET
 # =============================================================================
-
 resource "oci_core_subnet" "subnet" {
   compartment_id      = var.compartment_id
   vcn_id              = oci_core_vcn.vcn.id
-  display_name        = local.display_names.subnet
+  display_name        = "${local.resource_prefix}-subnet"
   cidr_block          = local.network_config.subnet_cidr_block
   dns_label           = "subnet"
   availability_domain = local.availability_domain
   route_table_id      = oci_core_route_table.rt.id
-  security_list_ids   = [oci_core_security_list.sl.id]
 
   # Enable public IP assignment for instances
   prohibit_public_ip_on_vnic = false
@@ -74,92 +70,12 @@ resource "oci_core_subnet" "subnet" {
 }
 
 # =============================================================================
-# SECURITY LIST (LEGACY - FOR COMPATIBILITY)
+# NETWORK SECURITY GROUP
 # =============================================================================
-
-resource "oci_core_security_list" "sl" {
-  compartment_id = var.compartment_id
-  vcn_id         = oci_core_vcn.vcn.id
-  display_name   = local.display_names.security_list
-
-  # Outbound traffic - Allow all
-  egress_security_rules {
-    protocol    = "all"
-    destination = "0.0.0.0/0"
-    description = "Allow all outbound traffic"
-  }
-
-  # SSH access
-  ingress_security_rules {
-    protocol    = "6" # TCP
-    source      = "0.0.0.0/0"
-    description = "SSH access"
-
-    tcp_options {
-      min = 22
-      max = 22
-    }
-  }
-
-  # HTTP access (for potential web interfaces)
-  ingress_security_rules {
-    protocol    = "6" # TCP
-    source      = "0.0.0.0/0"
-    description = "HTTP access"
-
-    tcp_options {
-      min = 80
-      max = 80
-    }
-  }
-
-  # HTTPS access (for potential web interfaces)
-  ingress_security_rules {
-    protocol    = "6" # TCP
-    source      = "0.0.0.0/0"
-    description = "HTTPS access"
-
-    tcp_options {
-      min = 443
-      max = 443
-    }
-  }
-
-  # ICMP traffic for ping
-  ingress_security_rules {
-    protocol    = "1" # ICMP
-    source      = "0.0.0.0/0"
-    description = "ICMP traffic"
-
-    icmp_options {
-      type = 3
-      code = 4
-    }
-  }
-
-  # ICMP Echo Request
-  ingress_security_rules {
-    protocol    = "1" # ICMP
-    source      = "0.0.0.0/0"
-    description = "ICMP Echo Request"
-
-    icmp_options {
-      type = 8
-    }
-  }
-
-  freeform_tags = local.common_tags
-  defined_tags = var.defined_tags
-}
-
-# =============================================================================
-# NETWORK SECURITY GROUP (ENHANCED SECURITY)
-# =============================================================================
-
 resource "oci_core_network_security_group" "nsg" {
   compartment_id = var.compartment_id
   vcn_id         = oci_core_vcn.vcn.id
-  display_name   = local.display_names.nsg
+  display_name   = "${local.resource_prefix}-nsg"
 
   freeform_tags = local.common_tags
   defined_tags = var.defined_tags
@@ -168,7 +84,6 @@ resource "oci_core_network_security_group" "nsg" {
 # =============================================================================
 # NSG SECURITY RULES
 # =============================================================================
-
 # SSH access rule
 resource "oci_core_network_security_group_security_rule" "nsg_ssh" {
   network_security_group_id = oci_core_network_security_group.nsg.id
@@ -186,48 +101,54 @@ resource "oci_core_network_security_group_security_rule" "nsg_ssh" {
   }
 }
 
-# Custom development port range
-resource "oci_core_network_security_group_security_rule" "nsg_dev_ports" {
+# HTTP Port for Caddy/Let's Encrypt
+resource "oci_core_network_security_group_security_rule" "nsg_http" {
   network_security_group_id = oci_core_network_security_group.nsg.id
   direction                 = "INGRESS"
   protocol                  = "6" # TCP
   source                    = "0.0.0.0/0"
   source_type               = "CIDR_BLOCK"
-  description               = "Development ports access (3000-9999)"
+  description               = "HTTP for Let's Encrypt certificate validation"
 
   tcp_options {
     destination_port_range {
-      min = 3000
-      max = 9999
+      min = 80
+      max = 80
     }
   }
 }
 
-# ICMP rules for connectivity testing
-resource "oci_core_network_security_group_security_rule" "nsg_icmp" {
+# HTTPS Port for Caddy
+resource "oci_core_network_security_group_security_rule" "nsg_https" {
   network_security_group_id = oci_core_network_security_group.nsg.id
   direction                 = "INGRESS"
-  protocol                  = "1" # ICMP
+  protocol                  = "6" # TCP
   source                    = "0.0.0.0/0"
   source_type               = "CIDR_BLOCK"
-  description               = "ICMP for ping and path discovery"
+  description               = "HTTPS for Caddy/code-server access"
 
-  icmp_options {
-    type = 3
-    code = 4
+  tcp_options {
+    destination_port_range {
+      min = 443
+      max = 443
+    }
   }
 }
 
-resource "oci_core_network_security_group_security_rule" "nsg_icmp_echo" {
+# VS Code Server port
+resource "oci_core_network_security_group_security_rule" "nsg_vscode" {
   network_security_group_id = oci_core_network_security_group.nsg.id
   direction                 = "INGRESS"
-  protocol                  = "1" # ICMP
+  protocol                  = "6" # TCP
   source                    = "0.0.0.0/0"
   source_type               = "CIDR_BLOCK"
-  description               = "ICMP Echo Request (ping)"
+  description               = "VS Code Server access"
 
-  icmp_options {
-    type = 8
+  tcp_options {
+    destination_port_range {
+      min = 8080
+      max = 8080
+    }
   }
 }
 
@@ -239,4 +160,23 @@ resource "oci_core_network_security_group_security_rule" "nsg_egress" {
   destination               = "0.0.0.0/0"
   destination_type          = "CIDR_BLOCK"
   description               = "Allow all outbound traffic"
+}
+
+# =============================================================================
+# DATA SOURCES
+# =============================================================================
+# Find the VNIC attachment for the primary VNIC created with the instance.
+data "oci_core_vnic_attachments" "instance_vnics" {
+  compartment_id = var.compartment_id
+  instance_id    = oci_core_instance.vscode_server.id
+}
+
+# Find the private IP object associated with the primary VNIC.
+# This is required to attach the reserved public IP.
+data "oci_core_private_ip" "primary_vnic_private_ip" {
+  # The first VNIC attachment is the primary one.
+  vnic_id = data.oci_core_vnic_attachments.instance_vnics.vnic_attachments[0].vnic_id
+
+  # The IP address is known from the instance resource.
+  ip_address = oci_core_instance.vscode_server.private_ip
 }
