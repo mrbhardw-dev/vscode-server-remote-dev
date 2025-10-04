@@ -18,7 +18,7 @@ resource "google_compute_network" "vpc" {
 # -----------------------------------------------------------------------------
 resource "google_compute_subnetwork" "subnet" {
   name          = "${local.resource_prefix}-subnet"
-  ip_cidr_range = "10.10.1.0/24"
+  ip_cidr_range = "100.64.0.0/24"
   region        = var.region
   network       = google_compute_network.vpc.id
 }
@@ -32,7 +32,7 @@ resource "google_compute_firewall" "allow_web_access" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "7080", "443"]
+    ports    = ["80", "443", "8080"]
   }
 
   source_ranges = ["0.0.0.0/0"]

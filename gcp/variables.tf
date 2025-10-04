@@ -11,18 +11,19 @@
 variable "project_id" {
   description = "The GCP project ID to deploy resources into."
   type        = string
+  default="solid-choir-472607-r1"
 }
 
 variable "region" {
   description = "The GCP region for the resources."
   type        = string
-  default     = "us-central1"
+  default     = "europe-west4"
 }
 
 variable "zone" {
   description = "The GCP zone for the compute instance."
   type        = string
-  default     = "us-central1-a"
+  default     = "europe-west4-a"
 }
 
 
@@ -39,7 +40,7 @@ variable "environment" {
 variable "machine_type" {
   description = "The machine type for the VS Code server instance."
   type        = string
-  default     = "e2-micro"
+  default     = "e2-medium"
 }
 
 variable "boot_disk_image" {
@@ -48,35 +49,3 @@ variable "boot_disk_image" {
   default     = "ubuntu-os-cloud/ubuntu-2204-lts"
 }
 
-# -----------------------------------------------------------------------------
-# VS Code Server Configuration
-# -----------------------------------------------------------------------------
-variable "code_server_password" {
-  description = "Password for code-server"
-  type        = string
-  default     = "P@ssw0rd@123"
-}
-
-variable "code_server_domain" {
-  description = "Domain for code-server"
-  type        = string
-  default     = "vscode.mbtux.com"
-}
-
-variable "letsencrypt_email" {
-  description = "Email for Let's Encrypt SSL"
-  type        = string
-  default     = "mritunjay.bhardwaj@mbtux.com"
-}
-
-variable "code_server_user" {
-  description = "User to run code-server"
-  type        = string
-  default     = "codeuser"
-}
-
-variable "http_port" {
-  description = "Port for code-server"
-  type        = number
-  default     = 8080
-}

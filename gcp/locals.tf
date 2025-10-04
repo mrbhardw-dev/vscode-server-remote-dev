@@ -15,12 +15,5 @@ locals {
     purpose     = "vscode-server"
   }
 
-  # Template variables for the startup script
-  startup_script_vars = {
-    CODE_SERVER_USER     = var.code_server_user
-    CODE_SERVER_PASSWORD = var.code_server_password
-    CODE_SERVER_DOMAIN   = var.code_server_domain
-    LETSENCRYPT_EMAIL    = var.letsencrypt_email
-    HTTP_PORT            = var.http_port
-  }
+
 }

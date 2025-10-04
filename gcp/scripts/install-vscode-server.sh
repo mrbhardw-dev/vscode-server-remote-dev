@@ -13,7 +13,7 @@ log "Starting VS Code Server setup on Ubuntu 22..."
 # --- Environment variables (from your Terraform input) ---
 CODE_SERVER_USER="coder"
 CODE_SERVER_PASSWORD="P@ssw0rd@123"
-CODE_SERVER_DOMAIN="vscode.mbtux.com"
+CODE_SERVER_DOMAIN="vscode-gcp.mbtux.com"
 LETSENCRYPT_EMAIL="mritunjay.bhardwaj@mbtux.com"
 HTTP_PORT="8080"
 
