@@ -24,6 +24,18 @@ resource "google_service_account" "instance_sa" {
   display_name = "Service Account for VS Code Server Instance"
 }
 
+resource "google_project_iam_member" "ops_agent_monitoring" {
+  project = var.project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.instance_sa.email}"
+}
+
+resource "google_project_iam_member" "ops_agent_logging" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.instance_sa.email}"
+}
+
 # -----------------------------------------------------------------------------
 # Compute Instance
 # -----------------------------------------------------------------------------
@@ -48,9 +60,8 @@ resource "google_compute_instance" "vscode_server" {
     }
   }
 
-  metadata = {
-    startup-script = file("${path.module}/scripts/install-vscode-server.sh")
-  }
+metadata_startup_script = file("${path.module}/scripts/install-vscode-server.sh")
+
   service_account {
     email  = google_service_account.instance_sa.email
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
