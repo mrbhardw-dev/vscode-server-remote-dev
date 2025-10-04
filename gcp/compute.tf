@@ -62,6 +62,10 @@ resource "google_compute_instance" "vscode_server" {
 
 metadata_startup_script = file("${path.module}/scripts/install-vscode-server.sh")
 
+metadata = {
+    enable-osconfig = "TRUE"
+  }
+
   service_account {
     email  = google_service_account.instance_sa.email
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
