@@ -60,8 +60,6 @@ resource "google_compute_instance" "vscode_server" {
     }
   }
 
-metadata_startup_script = file("${path.module}/scripts/install-vscode-server.sh")
-
 metadata = {
     enable-osconfig = "TRUE"
   }

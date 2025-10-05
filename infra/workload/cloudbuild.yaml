@@ -1,0 +1,52 @@
+pipeline:
+   # Initialize Terraform
+   - name: 'hashicorp/terraform:1.9.0'
+     args: ['init']
+     dir: 'infra/workload'
+
+   # Check Terraform formatting
+   - name: 'hashicorp/terraform:1.9.0'
+     args: ['fmt', '-check']
+     dir: 'infra/workload'
+
+   # Validate Terraform configuration
+   - name: 'hashicorp/terraform:1.9.0'
+     args: ['validate']
+     dir: 'infra/workload'
+
+   # Security scan with tfsec
+   - name: 'aquasecurity/tfsec'
+     args: ['.']
+     dir: 'infra/workload'
+
+   # Plan Terraform changes
+   - name: 'hashicorp/terraform:1.9.0'
+     args: ['plan', '-out=tfplan']
+     dir: 'infra/workload'
+
+   # Apply Terraform changes (only if not a pull request)
+   - name: 'hashicorp/terraform:1.9.0'
+     args: ['apply', '-auto-approve', 'tfplan']
+     dir: 'infra/workload'
+     when:
+       condition:
+         string_value: '$BUILD_TRIGGER_TYPE'
+         operation: 'not_equals'
+         value: 'PULL_REQUEST'
+
+   # Output deployment information (only if applied)
+   - name: 'hashicorp/terraform:1.9.0'
+     args: ['output']
+     dir: 'infra/workload'
+     when:
+       condition:
+         string_value: '$BUILD_TRIGGER_TYPE'
+         operation: 'not_equals'
+         value: 'PULL_REQUEST'
+
+# Options for Cloud Build
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Timeout for the build
+timeout: '1200s'
