@@ -1,13 +1,24 @@
 # --- 1. Cloud Build Connection (Host) ---
-# Manually created in GCP: github-developer-connect (not managed by Terraform)
+# This resource connects your GCP project to GitHub (the host)
+resource "google_cloudbuildv2_connection" "tf_github_connection" {
+  project  = var.project_id
+  location = var.region
+  name     = "github-developer-connect"
+
+  github_config {
+    authorizer_credential {
+      oauth_token_secret_version = var.github_oauth_token_secret
+    }
+  }
+}
 
 # --- 2. Cloud Build Repository (Link) ---
 # This links your specific GitHub repository to the host connection.
 # NOTE: The 'remote_uri' must end with .git
 resource "google_cloudbuildv2_repository" "tf_workload_repo" {
   project             = var.project_id
-  location            = var.region
-  parent_connection   = "github-developer-connect"
+  location            = google_cloudbuildv2_connection.tf_github_connection.location
+  parent_connection   = google_cloudbuildv2_connection.tf_github_connection.name
   name                = "vscode-server-remote-dev-repo" # A custom name for the linked repo
 
   # *** FIX FROM PREVIOUS ERROR: Added .git suffix ***
@@ -18,7 +29,7 @@ resource "google_cloudbuildv2_repository" "tf_workload_repo" {
 # This trigger is configured to run builds from the new 2nd Gen Repository
 resource "google_cloudbuild_trigger" "tf_trigger" {
   project  = var.project_id
-  location = var.region
+  location = google_cloudbuildv2_connection.tf_github_connection.location
   name     = "vscode-server-remote-dev-trigger"
 
   # Path to your cloudbuild.yaml in the repository root (relative path required)

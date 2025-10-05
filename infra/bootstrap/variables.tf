@@ -38,3 +38,9 @@ variable "cloudbuild_config_path" {
     error_message = "The cloudbuild_config_path must be a relative path (no leading '/') and end with '.yaml' or '.yml'."
   }
 }
+
+variable "github_oauth_token_secret" {
+  description = "Secret version for GitHub OAuth token (e.g., projects/project/secrets/github-token/versions/latest). Required for Cloud Build connection."
+  type        = string
+  default     = ""
+}
