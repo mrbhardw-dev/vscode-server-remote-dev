@@ -1,4 +1,4 @@
-pipeline:
+steps:
    # Initialize Terraform
    - name: 'hashicorp/terraform:1.9.0'
      args: ['init']
@@ -24,29 +24,19 @@ pipeline:
      args: ['plan', '-out=tfplan']
      dir: 'infra/workload'
 
-   # Apply Terraform changes (only if not a pull request)
+   # Apply Terraform changes
    - name: 'hashicorp/terraform:1.9.0'
      args: ['apply', '-auto-approve', 'tfplan']
      dir: 'infra/workload'
-     when:
-       condition:
-         string_value: '$BUILD_TRIGGER_TYPE'
-         operation: 'not_equals'
-         value: 'PULL_REQUEST'
 
-   # Output deployment information (only if applied)
+   # Output deployment information
    - name: 'hashicorp/terraform:1.9.0'
      args: ['output']
      dir: 'infra/workload'
-     when:
-       condition:
-         string_value: '$BUILD_TRIGGER_TYPE'
-         operation: 'not_equals'
-         value: 'PULL_REQUEST'
 
 # Options for Cloud Build
 options:
-  logging: CLOUD_LOGGING_ONLY
+ logging: CLOUD_LOGGING_ONLY
 
 # Timeout for the build
 timeout: '1200s'
