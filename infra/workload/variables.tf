@@ -11,7 +11,7 @@
 variable "project_id" {
   description = "The GCP project ID to deploy resources into."
   type        = string
-  default="solid-choir-472607-r1"
+  default     = "solid-choir-472607-r1"
 }
 
 variable "region" {

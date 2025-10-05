@@ -60,7 +60,7 @@ resource "google_compute_instance" "vscode_server" {
     }
   }
 
-metadata = {
+  metadata = {
     enable-osconfig = "TRUE"
   }
 
