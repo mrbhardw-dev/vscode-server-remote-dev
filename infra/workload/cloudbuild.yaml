@@ -15,7 +15,7 @@ steps:
      dir: 'infra/workload'
 
    # Security scan with tfsec
-   - name: 'aquasecurity/tfsec'
+   - name: 'tfsec/tfsec'
      args: ['.']
      dir: 'infra/workload'
 
