@@ -1,7 +1,7 @@
 steps:
-   # Initialize Terraform
+   # Initialize Terraform with upgrade to resolve provider version conflicts
    - name: 'hashicorp/terraform:1.9.0'
-     args: ['init']
+     args: ['init', '-upgrade']
      dir: 'infra/workload'
 
    # Check Terraform formatting
