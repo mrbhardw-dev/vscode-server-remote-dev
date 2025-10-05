@@ -65,7 +65,7 @@ resource "google_compute_instance" "vscode_server" {
   }
 
   service_account {
-    email  = google_service_account.instance_sa.email
+    email = google_service_account.instance_sa.email
     scopes = [
       "https://www.googleapis.com/auth/devstorage.read_write",
       "https://www.googleapis.com/auth/logging.write",
