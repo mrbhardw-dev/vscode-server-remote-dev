@@ -6,8 +6,9 @@ resource "google_cloudbuildv2_connection" "tf_github_connection" {
   name     = "github-developer-connect"
 
   github_config {
+    app_installation_id = 86612216
     authorizer_credential {
-      oauth_token_secret_version = var.github_oauth_token_secret
+      oauth_token_secret_version = "projects/solid-choir-472607-r1/secrets/github-developer-connect-github-oauthtoken-2b8ff0/versions/latest"
     }
   }
 }
@@ -19,7 +20,7 @@ resource "google_cloudbuildv2_repository" "tf_workload_repo" {
   project             = var.project_id
   location            = google_cloudbuildv2_connection.tf_github_connection.location
   parent_connection   = google_cloudbuildv2_connection.tf_github_connection.name
-  name                = "vscode-server-remote-dev-repo" # A custom name for the linked repo
+  name                = "mrbhardw-dev-vscode-server-remote-dev" # A custom name for the linked repo
 
   # *** FIX FROM PREVIOUS ERROR: Added .git suffix ***
   remote_uri          = "https://github.com/${var.github_owner}/${var.github_repo}.git"
@@ -43,14 +44,14 @@ resource "google_cloudbuild_trigger" "tf_trigger" {
     
     # Define the event that triggers the build
     push {
-      branch = "main" # Change this regex if needed
+      branch = "^master$" # Change this regex if needed
     }
   }
 
   # IMPORTANT: Explicitly setting the service account often resolves generic 400 errors.
-  # Ensure this service account is created and has the necessary permissions 
+  # Ensure this service account is created and has the necessary permissions
   # (e.g., roles/cloudbuild.builds.builder)
-  # service_account = google_service_account.cloudbuild_sa.id # Uncomment if using a custom SA
+  service_account = "projects/solid-choir-472607-r1/serviceAccounts/mrbhardw-dev-terraform-sa@solid-choir-472607-r1.iam.gserviceaccount.com"
 }
 
 # --- 4. Custom Service Account (Optional but Recommended) ---
