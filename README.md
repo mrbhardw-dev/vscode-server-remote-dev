@@ -1,53 +1,85 @@
-# 🚀 VS Code Server on GCP and OCI
+# 🚀 VS Code Server Remote Dev Infrastructure
 
-This project provides Terraform configurations for deploying VS Code Server on both Google Cloud Platform (GCP) and Oracle Cloud Infrastructure (OCI).
+This project provides comprehensive Terraform configurations for deploying and managing VS Code Server infrastructure on Google Cloud Platform, including CI/CD pipelines and automated deployments.
 
-Each platform has its own dedicated directory containing all the necessary Terraform files, scripts, and documentation.
+## 🏗 Infrastructure Components
 
-## ☁️ Platforms
-
-| Platform | Description | Features |
+| Component | Description | Purpose |
 | :--- | :--- | :--- |
-| **[Google Cloud (GCP)](./gcp/README.md)** | A robust and scalable deployment on GCP. | • Automated HTTPS with Let's Encrypt<br>• Custom VPC and Firewall<br>• Dedicated IAM Service Account<br>• Static IP Address |
-| **[Oracle Cloud (OCI)](./oci/README.md)** | A cost-effective deployment leveraging OCI's Always Free Tier. | • Optimized for Always Free resources<br>• ARM-based instances for performance<br>• Secure VCN with NSGs<br>• Persistent block storage |
+| **[Bootstrap](./infra/bootstrap/)** | CI/CD Foundation | Sets up Cloud Build, GitHub integration, and state management |
+| **[Workload](./infra/workload/)** | VS Code Server Deployment | Deploys the actual VS Code Server instances and networking |
+| **[OCI](./oci/)** | Alternative Cloud Deployment | Oracle Cloud Infrastructure deployment option |
 
 ## 🚀 Getting Started
 
-Choose your desired cloud platform and follow the detailed instructions in its respective `README.md` file.
+### Bootstrap Infrastructure (Required First)
 
-###  GCP
+The bootstrap infrastructure must be deployed first as it creates the CI/CD pipeline and state storage:
 
-1.  **Navigate to the GCP directory:**
-    ```bash
-    cd gcp
-    ```
-2.  **Follow the instructions:**
-    - GCP README.md
+1. **Deploy Bootstrap:**
+   ```bash
+   cd infra/bootstrap
+   terraform init
+   terraform apply
+   ```
 
-### OCI
+2. **Verify Bootstrap:**
+   - Cloud Build connection to GitHub
+   - GCS bucket for Terraform state
+   - Build triggers configured
 
-1.  **Navigate to the OCI directory:**
-    ```bash
-    cd oci
-    ```
-2.  **Follow the instructions:**
-    - OCI README.md
+### Workload Deployment
+
+Once bootstrap is complete, deploy the VS Code Server:
+
+1. **Deploy Workload:**
+   ```bash
+   cd infra/workload
+   terraform init
+   terraform apply
+   ```
+
+2. **Access VS Code Server:**
+   - Web interface via configured domain
+   - SSH access through IAP
+
+### Alternative: OCI Deployment
+
+For Oracle Cloud deployment:
+
+1. **Navigate to OCI:**
+   ```bash
+   cd oci
+   ```
+
+2. **Follow OCI instructions:**
+   - OCI README.md
 
 ## 📁 Project Structure
 
 ```plaintext
 .
-├── gcp/
-│   ├── README.md
-│   ├── compute.tf
-│   ├── locals.tf
-│   ├── network.tf
-│   ├── outputs.tf
-│   ├── provider.tf
-│   ├── variables.tf
-│   ├── terraform.tfvars.example
-│   └── scripts/
-│       └── install-vscode-server.sh
+├── infra/
+│   ├── bootstrap/
+│   │   ├── README.md
+│   │   ├── backend.tf
+│   │   ├── bootstrap.tf
+│   │   ├── codebuild.tf
+│   │   ├── outputs.tf
+│   │   ├── variables.tf
+│   │   └── versions.tf
+│   └── workload/
+│       ├── README.md
+│       ├── backend.tf
+│       ├── cloudbuild.yaml
+│       ├── compute.tf
+│       ├── locals.tf
+│       ├── network.tf
+│       ├── outputs.tf
+│       ├── provider.tf
+│       ├── variables.tf
+│       └── scripts/
+│           └── install-vscode-server.sh
 ├── oci/
 │   ├── README.md
 │   ├── compute.tf
@@ -59,7 +91,8 @@ Choose your desired cloud platform and follow the detailed instructions in its r
 │   ├── terraform.tfvars.example
 │   └── scripts/
 │       └── cloud-init.yaml
-└── README.md
+├── README.md
+└── .gitignore
 ```
 
 ## 🤝 Contributing
