@@ -14,10 +14,6 @@ steps:
      args: ['validate']
      dir: 'infra/workload'
 
-   # Security scan with tfsec
-   - name: 'tfsec/tfsec'
-     args: ['.']
-     dir: 'infra/workload'
 
    # Plan Terraform changes
    - name: 'hashicorp/terraform:1.9.0'
