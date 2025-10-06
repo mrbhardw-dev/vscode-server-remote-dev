@@ -1,0 +1,26 @@
+# GCP Project Configuration
+project_id = "your-project-id"
+region     = "europe-west4"
+zone       = "europe-west4-a"
+environment = "dev"
+
+# Cloud Run Configuration
+service_name = "vscode-server-cloudrun"
+vscode_password = "YourSecurePassword123"
+
+# GitHub OAuth (optional - leave empty to use password auth)
+# github_client_id = "your-github-oauth-client-id"
+# github_client_secret = "your-github-oauth-client-secret"
+# github_redirect_uri = "https://your-cloud-run-url/login/github/callback"
+
+# Resource limits
+cpu_limit    = "1000m"
+memory_limit = "2Gi"
+max_instances = 1
+
+# Storage Configuration
+temp_storage_size_gb = 1
+
+# Backup Configuration (optional)
+enable_backup = false
+backup_bucket_name = "your-project-id-vscode-backup"
