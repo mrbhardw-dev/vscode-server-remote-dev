@@ -8,7 +8,7 @@ set -euxo pipefail
 # setup with a dedicated user and Caddy for automatic HTTPS.
 #
 # Variables substituted by Terraform templatefile():
-#   ${code_user}, ${vscode_password}, ${vscode_domain}, ${letsencrypt_email}, ${http_port}
+#   ${code_user}, ${vscode_password}, ${http_port}
 # =============================================================================
 
 # --- Logging ---
@@ -31,53 +31,30 @@ if ! id -u "${code_user}" >/dev/null 2>&1; then
   echo "${code_user} ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/${code_user}"
 fi
 
-# --- Install code-server ---
-echo "[3/6] Installing code-server..."
-curl -fsSL https://code-server.dev/install.sh | sh
+# --- Install Docker ---
+echo "[3/6] Installing Docker..."
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+usermod -aG docker "${code_user}"
 
-# --- Configure code-server ---
-echo "[4/6] Configuring code-server for user ${code_user}..."
-mkdir -p "/home/${code_user}/.config/code-server"
+# --- Install code-server via Docker ---
+echo "[4/6] Running code-server in Docker container..."
+docker run -d \
+  --name code-server \
+  --restart unless-stopped \
+  -p ${http_port}:8080 \
+  -v /home/${code_user}:/home/coder \
+  -v /workspace:/workspace \
+  -e PASSWORD="${vscode_password}" \
+  -u $(id -u ${code_user}):$(id -g ${code_user}) \
+  codercom/code-server:latest
 
-cat > "/home/${code_user}/.config/code-server/config.yaml" <<EOF
-bind-addr: 127.0.0.1:${http_port}
-auth: password
-password: ${vscode_password}
-cert: false
-EOF
+# Wait for container to start
+sleep 5
 
-chown -R "${code_user}:${code_user}" "/home/${code_user}/.config"
-
-# --- Create and Enable Systemd Service ---
-echo "[5/6] Setting up systemd service..."
-cat > /etc/systemd/system/code-server.service <<EOF
-[Unit]
-Description=code-server
-After=network.target
-
-[Service]
-Type=simple
-User=${code_user}
-Group=${code_user}
-ExecStart=/usr/bin/code-server --config /home/${code_user}/.config/code-server/config.yaml
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable --now code-server
-
-# --- Install and Configure Caddy for HTTPS ---
-echo "[6/6] Installing and configuring Caddy as a reverse proxy..."
-apt-get install -y debian-keyring debian-archive-keyring apt-transport-https
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
-apt-get update -y
-apt-get install -y caddy
-
-systemctl enable --now caddy
+# --- Configure firewall for code-server ---
+echo "[5/6] Configuring firewall..."
+ufw allow ${http_port}/tcp
 
 echo "===== VS Code Server setup complete! ====="
-echo "Access your IDE at: https://${vscode_domain}"
+echo "Access your IDE at: http://<YOUR_PUBLIC_IP>:${http_port}"

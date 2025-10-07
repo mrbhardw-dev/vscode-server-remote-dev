@@ -39,30 +39,10 @@ variable "container_image" {
 variable "vscode_password" {
   description = "Password for VS Code Server authentication (used when GitHub OAuth not configured)."
   type        = string
-  default     = "P@ssw0rd@123"
+  default     = ""
   sensitive   = true
 }
 
-# GitHub OAuth Configuration
-variable "github_client_id" {
-  description = "GitHub OAuth App Client ID (leave empty to use password auth)."
-  type        = string
-  default     = "Ov23li0eKopVqwBJQHZq"
-  sensitive   = true
-}
-
-variable "github_client_secret" {
-  description = "GitHub OAuth App Client Secret (leave empty to use password auth)."
-  type        = string
-  default     = "62e3db27fbb170aabe1bfdab5727813a849abbc5"
-  sensitive   = true
-}
-
-variable "github_redirect_uri" {
-  description = "GitHub OAuth redirect URI (optional, auto-generated if not provided)."
-  type        = string
-  default     = "https://vscode-server-cloudrun-6xhznsmgzq-ez.a.run.app/login/github/callback"
-}
 
 variable "cpu_limit" {
   description = "CPU limit for Cloud Run service."
@@ -78,13 +58,6 @@ variable "memory_limit" {
 
 variable "max_instances" {
   description = "Maximum number of instances for Cloud Run service."
-  type        = number
-  default     = 1
-}
-
-# Storage Configuration
-variable "temp_storage_size_gb" {
-  description = "Temporary in-memory storage size in GB."
   type        = number
   default     = 1
 }

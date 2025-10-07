@@ -38,10 +38,8 @@ output "instance_state" {
 # =============================================================================
 
 output "public_ip" {
-  description = "Public IP address of the instance (ephemeral or reserved)"
-  value = var.use_reserved_ip ? (
-    length(oci_core_public_ip.reserved_ip) > 0 ? oci_core_public_ip.reserved_ip[0].ip_address : null
-  ) : oci_core_instance.vscode_server.public_ip
+  description = "Public IP address of the instance"
+  value = oci_core_instance.vscode_server.public_ip
 }
 
 output "private_ip" {
@@ -49,12 +47,6 @@ output "private_ip" {
   value       = oci_core_instance.vscode_server.private_ip
 }
 
-output "reserved_ip_ocid" {
-  description = "OCID of reserved public IP (if created)"
-  value       = var.use_reserved_ip ? (
-    length(oci_core_public_ip.reserved_ip) > 0 ? oci_core_public_ip.reserved_ip[0].id : null
-  ) : null
-}
 
 # =============================================================================
 # SSH CONNECTION INFORMATION
@@ -64,17 +56,11 @@ output "ssh_connection" {
   description = "SSH connection information for the instance"
   sensitive   = true
   value = {
-    host         = var.use_reserved_ip ? (
-      length(oci_core_public_ip.reserved_ip) > 0 ? oci_core_public_ip.reserved_ip[0].ip_address : oci_core_instance.vscode_server.public_ip
-    ) : oci_core_instance.vscode_server.public_ip
+    host         = oci_core_instance.vscode_server.public_ip
     user         = local.access_info.ssh_user
     port         = 22
     private_key  = var.private_key_path
-    command      = "ssh -i ${var.private_key_path} ${local.access_info.ssh_user}@${
-      var.use_reserved_ip ? (
-        length(oci_core_public_ip.reserved_ip) > 0 ? oci_core_public_ip.reserved_ip[0].ip_address : oci_core_instance.vscode_server.public_ip
-      ) : oci_core_instance.vscode_server.public_ip
-    }"
+    command      = "ssh -i ${var.private_key_path} ${local.access_info.ssh_user}@${oci_core_instance.vscode_server.public_ip}"
   }
 }
 
@@ -88,9 +74,7 @@ output "vscode_remote_info" {
   value = {
     ssh_host_config = {
       host           = "oci-remote-dev"
-      hostname       = var.use_reserved_ip ? (
-        length(oci_core_public_ip.reserved_ip) > 0 ? oci_core_public_ip.reserved_ip[0].ip_address : oci_core_instance.vscode_server.public_ip
-      ) : oci_core_instance.vscode_server.public_ip
+      hostname       = oci_core_instance.vscode_server.public_ip
       user           = local.access_info.ssh_user
       identity_file  = var.private_key_path
       port           = 22
@@ -98,31 +82,10 @@ output "vscode_remote_info" {
     workspace_path    = local.access_info.workspace
     installed_tools   = local.access_info.installed_tools
     setup_complete    = "Connect using VS Code Remote-SSH extension"
-    connection_test   = "ssh -o ConnectTimeout=10 ${local.access_info.ssh_user}@${
-      var.use_reserved_ip ? (
-        length(oci_core_public_ip.reserved_ip) > 0 ? oci_core_public_ip.reserved_ip[0].ip_address : oci_core_instance.vscode_server.public_ip
-      ) : oci_core_instance.vscode_server.public_ip
-    } 'echo Connected successfully'"
+    connection_test   = "ssh -o ConnectTimeout=10 ${local.access_info.ssh_user}@${oci_core_instance.vscode_server.public_ip} 'echo Connected successfully'"
   }
 }
 
-# =============================================================================
-# WORKSPACE STORAGE INFORMATION
-# =============================================================================
-
-output "workspace_volume_info" {
-  description = "Information about the persistent workspace volume"
-  value = var.workspace_volume_size_in_gbs > 0 ? {
-    volume_ocid       = oci_core_volume.workspace_volume[0].id
-    size_in_gbs      = oci_core_volume.workspace_volume[0].size_in_gbs
-    attachment_ocid   = oci_core_volume_attachment.workspace_attachment[0].id
-    mount_point      = "/home/${local.access_info.ssh_user}/workspace"
-    backup_enabled   = var.enable_workspace_backup
-    backup_policy    = var.enable_workspace_backup ? "bronze" : "none"
-  } : {
-    message = "No persistent workspace volume configured (workspace_volume_size_in_gbs = 0)"
-  }
-}
 
 # =============================================================================
 # NETWORK INFRASTRUCTURE
@@ -137,7 +100,6 @@ output "network_info" {
     subnet_cidr_block   = oci_core_subnet.subnet.cidr_block
     internet_gateway_id = oci_core_internet_gateway.igw.id
     route_table_id      = oci_core_route_table.rt.id
-    security_list_id    = oci_core_security_list.sl.id
     nsg_id              = oci_core_network_security_group.nsg.id
   }
 }
@@ -173,22 +135,14 @@ output "quick_start_commands" {
   description = "Quick start commands for immediate use"
   sensitive   = true
   value = {
-    ssh_connect = "ssh -i ${var.private_key_path} ${local.access_info.ssh_user}@${
-      var.use_reserved_ip ? (
-        length(oci_core_public_ip.reserved_ip) > 0 ? oci_core_public_ip.reserved_ip[0].ip_address : oci_core_instance.vscode_server.public_ip
-      ) : oci_core_instance.vscode_server.public_ip
-    }"
-    
-    test_connection = "ping -c 4 ${
-      var.use_reserved_ip ? (
-        length(oci_core_public_ip.reserved_ip) > 0 ? oci_core_public_ip.reserved_ip[0].ip_address : oci_core_instance.vscode_server.public_ip
-      ) : oci_core_instance.vscode_server.public_ip
-    }"
-    
+    ssh_connect = "ssh -i ${var.private_key_path} ${local.access_info.ssh_user}@${oci_core_instance.vscode_server.public_ip}"
+
+    test_connection = "ping -c 4 ${oci_core_instance.vscode_server.public_ip}"
+
     vscode_remote = "code --remote ssh-remote+oci-remote-dev"
-    
-    workspace_setup = var.workspace_volume_size_in_gbs > 0 ? "mkdir -p /home/${local.access_info.ssh_user}/workspace && sudo mount /dev/oracleoci/oraclevdb /home/${local.access_info.ssh_user}/workspace" : "cd /home/${local.access_info.ssh_user}"
-      
+
+    workspace_setup = "cd /home/${local.access_info.ssh_user}"
+
     development_tools = {
       docker    = "docker --version"
       node      = "node --version"
@@ -227,11 +181,7 @@ output "troubleshooting" {
   value = {
     cloud_init_log      = "/var/log/cloud-init-output.log"
     system_logs         = "/var/log/syslog"
-    ssh_debug_command   = "ssh -v -i ${var.private_key_path} ${local.access_info.ssh_user}@${
-      var.use_reserved_ip ? (
-        length(oci_core_public_ip.reserved_ip) > 0 ? oci_core_public_ip.reserved_ip[0].ip_address : oci_core_instance.vscode_server.public_ip
-      ) : oci_core_instance.vscode_server.public_ip
-    }"
+    ssh_debug_command   = "ssh -v -i ${var.private_key_path} ${local.access_info.ssh_user}@${oci_core_instance.vscode_server.public_ip}"
     instance_console    = "Available through OCI Console -> Compute -> Instances -> ${oci_core_instance.vscode_server.display_name}"
     support_bundle      = "sudo journalctl -u cloud-init-local -u cloud-init -u cloud-config -u cloud-final --no-pager"
   }

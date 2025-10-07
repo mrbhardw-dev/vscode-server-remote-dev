@@ -161,22 +161,3 @@ resource "oci_core_network_security_group_security_rule" "nsg_egress" {
   destination_type          = "CIDR_BLOCK"
   description               = "Allow all outbound traffic"
 }
-
-# =============================================================================
-# DATA SOURCES
-# =============================================================================
-# Find the VNIC attachment for the primary VNIC created with the instance.
-data "oci_core_vnic_attachments" "instance_vnics" {
-  compartment_id = var.compartment_id
-  instance_id    = oci_core_instance.vscode_server.id
-}
-
-# Find the private IP object associated with the primary VNIC.
-# This is required to attach the reserved public IP.
-data "oci_core_private_ip" "primary_vnic_private_ip" {
-  # The first VNIC attachment is the primary one.
-  vnic_id = data.oci_core_vnic_attachments.instance_vnics.vnic_attachments[0].vnic_id
-
-  # The IP address is known from the instance resource.
-  ip_address = oci_core_instance.vscode_server.private_ip
-}

@@ -17,7 +17,7 @@ output "cloud_run_service_location" {
 # Storage outputs
 output "storage_type" {
   description = "Type of storage used for persistence"
-  value       = "Temporary in-memory (1GB limit)"
+  value       = "Temporary in-memory (${var.memory_limit} limit)"
 }
 
 # Service account output
